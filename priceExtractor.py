@@ -1,14 +1,16 @@
 #priceExtractor by Jiro Mizuno
 
-#importing libraries
-import urllib
+#importing functions
+from selenium import webdriver
 import os
+import webbrowser
 
 #concatenates current URL with ticker
 def concatURL(ticker):
     #getting the url for the finance
-	base = "http://ichart.finance.yahoo.com/table.csv?s="
-    return base + ticker
+	base1 = "https://finance.yahoo.com/quote/"
+    base2 = "/history?p="
+    return base + ticker + base2 + ticker
 
 def makeFile(ticker,directory):
     currPath = os.getcwd()
@@ -21,6 +23,9 @@ def extractHistoricalPrices(ticker, directoryName):
     directoryPath = currPath + "/" + directoryPath + "/"
     if !(os.path.exists(directoryPath)):
         os.mkdir(directoryPath)
-	else
-		
-    
+	else:
+
+def getURL(ticker):
+    link = concatURL(ticker)
+    driver = webdriver.Firefox()
+    driver.get(ticker)
