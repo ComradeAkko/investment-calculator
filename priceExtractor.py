@@ -2,6 +2,7 @@
 
 #importing functions
 from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 import os
 import webbrowser
 import time
@@ -40,8 +41,11 @@ def getStockData(ticker):
 	profile.set_preference("browser.download.dir", os.getcwd())
 	profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/csv")
 
-	#set up the Firefox driver
+	#set up the Firefox driver and set it so that it waits for elements to appear
 	driver = webdriver.Firefox(firefox_profile=profile)
+	driver.implicitly_wait(10)
+
+	#open the link
 	driver.get(link)
 
     #clicking the "changing the date path"
@@ -64,19 +68,24 @@ def getStockData(ticker):
 	while(driver.current_url == link):
 		time.sleep(0.25)
 
-    #clicking the download button
+    #clicking the download button for price data
 	downloadButton = driver.find_element_by_xpath("//a[@class='Fl(end) Mt(3px) Cur(p)']")
 	downloadButton.click()
 
 	#getting the current URL and replacing it to get dividends data
 	currURL = driver.current_url
-	print(currURL)
 	newURL = currURL.replace("&interval=1d&filter=history&frequency=1d","&interval=div|split&filter=div&frequency=1d")
-	print(newURL)
 
+	#send random keys to the download button, because it somehow
+	#prevents the unknown bug of not loading the next page
+	downloadButton.send_keys(Keys.COMMAND)
+	
+	# get the new url
 	driver.get(newURL)
 
-	downloadButton.click()
+	# clicking the download button for dividend data
+	newDownload = driver.find_element_by_xpath("//a[@class='Fl(end) Mt(3px) Cur(p)']")
+	newDownload.click()
 
 
 	#quitting the driver

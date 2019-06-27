@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#investCalc by Jiro Mizuno
+#investCalc by ComradeAkko
 
 
 #need to make sure to delete previous data
