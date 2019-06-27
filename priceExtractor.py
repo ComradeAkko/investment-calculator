@@ -26,7 +26,7 @@ def concatURL(ticker):
 #         os.mkdir(directoryPath)
 # 	else:
 
-def getPrices(ticker):
+def getStockData(ticker):
     #concatenate the url for Yahoo Finance
 	link = concatURL(ticker)
 
@@ -48,32 +48,41 @@ def getPrices(ticker):
 	dateButton = driver.find_element_by_xpath("//span[@class='C($c-fuji-blue-1-b) Mstart(8px) Cur(p)']")
 	dateButton.click()
 
-	time.sleep(0.25)
-
     #clicking the "MAX" date
 	maxDate = driver.find_element_by_xpath("//span[@data-value='MAX']")
 	maxDate.click()
-
-	time.sleep(0.25)
 
     #clicking the "Done" button
 	doneButton = driver.find_element_by_xpath("//button[@class=' Bgc($c-fuji-blue-1-b) Bdrs(3px) Px(20px) Miw(100px) Whs(nw) Fz(s) Fw(500) C(white) Bgc($actionBlueHover):h Bd(0) D(ib) Cur(p) Td(n)  Py(9px) Miw(80px)! Fl(start)']")
 	doneButton.click()
 
-	time.sleep(0.25)
-
     #clicking the "Apply" button
 	applyButton = driver.find_element_by_xpath("//button[@data-reactid='25']")
 	applyButton.click()
 
-	time.sleep(0.25)
+	#wait for the new url to load
+	while(driver.current_url == link):
+		time.sleep(0.25)
 
     #clicking the download button
 	downloadButton = driver.find_element_by_xpath("//a[@class='Fl(end) Mt(3px) Cur(p)']")
 	downloadButton.click()
 
+	#getting the current URL and replacing it to get dividends data
+	currURL = driver.current_url
+	print(currURL)
+	newURL = currURL.replace("&interval=1d&filter=history&frequency=1d","&interval=div|split&filter=div&frequency=1d")
+	print(newURL)
+
+	driver.get(newURL)
+
+	downloadButton.click()
+
+
 	#quitting the driver
 	driver.quit()
 
 
-getPrices("MSFT")
+
+
+getStockData("SPY")
