@@ -66,7 +66,7 @@ def getStockData(ticker):
 
 	#wait for the new url to load
 	while(driver.current_url == link):
-		time.sleep(0.25)
+		time.sleep(0.1)
 
     #clicking the download button for price data
 	downloadButton = driver.find_element_by_xpath("//a[@class='Fl(end) Mt(3px) Cur(p)']")
@@ -84,14 +84,19 @@ def getStockData(ticker):
 	driver.get(newURL)
 
 	# clicking the download button for dividend data
-	newDownload = driver.find_element_by_xpath("//a[@class='Fl(end) Mt(3px) Cur(p)']")
-	newDownload.click()
+	downloadButton = driver.find_element_by_xpath("//a[@class='Fl(end) Mt(3px) Cur(p)']")
+	downloadButton.click()
+
+	#wait for the file to be downloaded
+	while(os.path.exists(ticker + "(1).csv") == False):
+		time.sleep(0.1)
+
+	#rename the files
+	os.rename(ticker + ".csv", ticker + "_price.csv")
+	os.rename(ticker + "(1).csv", ticker + "_dividend.csv")
 
 
 	#quitting the driver
 	driver.quit()
-
-
-
 
 getStockData("SPY")
