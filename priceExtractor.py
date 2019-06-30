@@ -34,6 +34,10 @@ def newDirectory(ticker):
 
 		if os.path.isfile(directoryPath + "\\" + ticker + "_dividend.csv"):
 			os.remove(directoryPath + "\\" + ticker + "_dividend.csv")
+			
+		if os.path.isfile(directoryPath + "\\" + ticker + "_split.csv"):
+			os.remove(directoryPath + "\\" + ticker + "_split.csv")
+
 	return directoryPath
 
 def getStockData(ticker):
@@ -48,7 +52,6 @@ def getStockData(ticker):
 
 	profile.set_preference("browser.download.folderList", 2)
 	profile.set_preference("browser.download.manager.showWhenStarting",False)
-	# profile.set_preference("browser.download.dir", os.getcwd())
 	profile.set_preference("browser.download.dir", directoryP)
 	profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/csv")
 
@@ -107,12 +110,35 @@ def getStockData(ticker):
 	# wait for the file to be downloaded
 	while(os.path.isfile(directoryP + "\\" + ticker + "(1).csv") == False):
 		time.sleep(0.1)
+	
+	# getting the current URL and replacing it to get dividends data
+	currURL = driver.current_url
+	newURL = currURL.replace("&interval=div|split&filter=div&frequency=1d","&interval=div|split&filter=split&frequency=1d")
+
+	# getting the new URL and accounting for weird bugs that stall the driver
+	finished = 0
+	while finished == 0:
+		try:
+			print("loading new page (may take a few seconds)")
+			driver.get(newURL)
+			finished = 1
+		except:
+			print("trying again")
+			time.sleep(5)
+	print("page loaded")
+
+	# clicking the download button for dividend data
+	downloadButton = driver.find_element_by_xpath("//a[@class='Fl(end) Mt(3px) Cur(p)']")
+	downloadButton.click()
+
+	# wait for the file to be downloaded
+	while(os.path.isfile(directoryP + "\\" + ticker + "(2).csv") == False):
+		time.sleep(0.1)
 
 	# rename the files
 	os.rename(directoryP + "\\" + ticker + ".csv", directoryP + "\\" + ticker + "_price.csv")
 	os.rename(directoryP + "\\" + ticker + "(1).csv", directoryP + "\\" + ticker + "_dividend.csv")
+	os.rename(directoryP + "\\" + ticker + "(2).csv", directoryP + "\\" + ticker + "_split.csv")
 
 	# quitting the driver
 	driver.quit()
-
-getStockData("SPY")
