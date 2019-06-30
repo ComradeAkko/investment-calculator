@@ -1,3 +1,7 @@
 geckodriver.log
 *.csv
 SPY
+MSFT
+AMZN
+AAPL
+__pycache__
