@@ -2,11 +2,15 @@
 
 #investCalc by ComradeAkko
 
-from priceExtractor import getStockData
+from priceExtractor import getTreasuryData, getStockData
 
-getStockData("MSFT")
+getStockData("SPY")
 
 
 #need to make sure to delete previous data
 
-#also account for dividends
+#get a treasury bonds returns data
+#get some federal tax rates data
+#capital gains tax
+#comission fees
+#sorting data by date
