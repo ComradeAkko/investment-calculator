@@ -3,9 +3,12 @@
 #investCalc by ComradeAkko
 
 from priceExtractor import getTreasuryData, getStockData
+from datetime import datetime
+import sys, csv, operator
 
-getStockData("SPY")
-
+data = csv.reader(open('stocks\\SPY\\SPY_dividend.csv'), delimiter=',')
+next(data)
+sorted(data, key=lambda day: datetime.strptime(day[0], "%Y-%m-%d"),reverse = False)
 
 #need to make sure to delete previous data
 

@@ -5,8 +5,7 @@
 #importing functions
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-import os
-import time
+import os, time, csv, sys
 
 # concatenates current URL with ticker
 def concatURL(ticker):
@@ -162,6 +161,8 @@ def getStockData(ticker):
 	driver.quit()
 
 
+
+
 def getTreasuryData():
 	# I'm personally using the federal bank of St. Louis's 10-treasury bond yield data 
 	url = "https://fred.stlouisfed.org/series/GS10"
@@ -193,7 +194,7 @@ def getTreasuryData():
 	while finished == 0:
 		try:
 			print("extracting data...")
-			#click the csv button
+			# click the csv button
 			csvButton = driver.find_element_by_xpath("//a[@id='download-data-csv']")
 			csvButton.click()
 			finished = 1
@@ -206,11 +207,9 @@ def getTreasuryData():
 	while(os.path.isfile(directoryT + "\\" + "GS10.csv") == False):
 		time.sleep(0.1)
 
-	# rename the files
+	# rename the file
 	os.rename(directoryT + "\\" + "GS10.csv", directoryT + "\\" +  "bonds.csv")
 
 	# quitting the driver
 	driver.quit()
-
-
 
