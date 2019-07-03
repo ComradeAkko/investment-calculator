@@ -5,7 +5,8 @@
 #importing functions
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-import os, time, csv, sys
+from datetime import datetime
+import os, time, sys, csv, operator
 
 # concatenates current URL with ticker
 def concatURL(ticker):
@@ -43,6 +44,7 @@ def newStockDirectory(ticker):
 
 	return directoryPath
 
+# creates a new bond directory or deletes previous data to make way for new bond data
 def newBondDirectory():
 	directoryPath = os.getcwd() + "\\bonds"
 
@@ -57,6 +59,24 @@ def newBondDirectory():
 		
 	return directoryPath
 
+# sorts data from the oldest date to the most recent date
+def sortData(filePath):
+	# open up the file for reading
+	data = csv.reader(open(filePath), delimiter=',')
+	
+	# skip the header
+	row = next(data)
+
+	# sort the data
+	dataSorted = sorted(data, key=lambda day: datetime.strptime(day[0], "%Y-%m-%d"),reverse = False)
+	
+	# writes in the new sorted data
+	with open(filePath, newline ='', mode = 'w') as newData:
+		dataWriter = csv.writer(newData, delimiter = ',')
+		dataWriter.writerow(row)
+		dataWriter.writerows(dataSorted)
+
+# gets historical stock data including prices, dividends, and stock splits
 def getStockData(ticker):
     # concatenate the url for Yahoo Finance
 	link = concatURL(ticker)
@@ -157,12 +177,16 @@ def getStockData(ticker):
 	os.rename(directoryP + "\\" + ticker + "(1).csv", directoryP + "\\" + ticker + "_dividend.csv")
 	os.rename(directoryP + "\\" + ticker + "(2).csv", directoryP + "\\" + ticker + "_split.csv")
 
+	# sort the data
+	sortData(directoryP + "\\" + ticker + "_price.csv")
+	sortData(directoryP + "\\" + ticker + "_dividend.csv")
+	sortData(directoryP + "\\" + ticker + "_split.csv")
+
+
 	# quitting the driver
 	driver.quit()
 
-
-
-
+# gets historical 10-year Treasury Bond yield data
 def getTreasuryData():
 	# I'm personally using the federal bank of St. Louis's 10-treasury bond yield data 
 	url = "https://fred.stlouisfed.org/series/GS10"
@@ -209,6 +233,9 @@ def getTreasuryData():
 
 	# rename the file
 	os.rename(directoryT + "\\" + "GS10.csv", directoryT + "\\" +  "bonds.csv")
+
+	# sort data
+	sortData(directoryT + "\\" +  "bonds.csv")
 
 	# quitting the driver
 	driver.quit()
