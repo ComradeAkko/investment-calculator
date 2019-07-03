@@ -6,7 +6,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import os
-import webbrowser
 import time
 
 # concatenates current URL with ticker
@@ -17,10 +16,15 @@ def concatURL(ticker):
 	return base1 + ticker + base2 + ticker
 
 # creates a new directory with the ticker name and returns the path
-def newDirectory(ticker):
-	directoryPath = os.getcwd() + "\\" + ticker
+def newStockDirectory(ticker):
+	directoryPath = os.getcwd() + "\\stocks"
 
 	#if the directory doesn't exist, make it
+	if os.path.exists(directoryPath) == False:
+		os.mkdir(directoryPath)
+
+	directoryPath += "\\" + ticker
+
 	if os.path.exists(directoryPath) == False:
 		os.mkdir(directoryPath)
 
@@ -40,12 +44,26 @@ def newDirectory(ticker):
 
 	return directoryPath
 
+def newBondDirectory():
+	directoryPath = os.getcwd() + "\\bonds"
+
+	#if the directory doesn't exist, make it
+	if os.path.exists(directoryPath) == False:
+		os.mkdir(directoryPath)
+
+	# if the directory exists, delete the previous data to make way for new data
+	else:
+		if os.path.isfile(directoryPath + "\\bonds.csv"):
+			os.remove(directoryPath + "\\bonds.csv")
+		
+	return directoryPath
+
 def getStockData(ticker):
     # concatenate the url for Yahoo Finance
 	link = concatURL(ticker)
 
 	# create a directory if it doesn't exist and get its path
-	directoryP = newDirectory(ticker)
+	directoryP = newStockDirectory(ticker)
 
     # set downloading preferences
 	profile = webdriver.FirefoxProfile()
@@ -95,11 +113,11 @@ def getStockData(ticker):
 	finished = 0
 	while finished == 0:
 		try:
-			print("loading new page (may take a few seconds)")
+			print("loading new page... (may take a few seconds)")
 			driver.get(newURL)
 			finished = 1
 		except:
-			print("trying again")
+			print("trying again...")
 			time.sleep(5)
 	print("page loaded")
 
@@ -119,11 +137,11 @@ def getStockData(ticker):
 	finished = 0
 	while finished == 0:
 		try:
-			print("loading new page (may take a few seconds)")
+			print("loading new page... (may take a few seconds)")
 			driver.get(newURL)
 			finished = 1
 		except:
-			print("trying again")
+			print("trying again...")
 			time.sleep(5)
 	print("page loaded")
 
@@ -142,3 +160,57 @@ def getStockData(ticker):
 
 	# quitting the driver
 	driver.quit()
+
+
+def getTreasuryData():
+	# I'm personally using the federal bank of St. Louis's 10-treasury bond yield data 
+	url = "https://fred.stlouisfed.org/series/GS10"
+
+	directoryT = newBondDirectory()
+
+	# set downloading preferences
+	profile = webdriver.FirefoxProfile()
+
+	profile.set_preference("browser.download.folderList", 2)
+	profile.set_preference("browser.download.manager.showWhenStarting",False)
+	profile.set_preference("browser.download.dir", directoryT)
+	profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/csv")
+
+	# set up the Firefox driver and set it so that it waits for elements to appear
+	driver = webdriver.Firefox(firefox_profile=profile)
+	driver.set_page_load_timeout(15)
+	driver.implicitly_wait(5)
+
+	# open the link
+	driver.get(url)
+
+	#click the dowload button
+	downloadButton = driver.find_element_by_xpath("//button[@id='download-button']")
+	downloadButton.click()
+
+	# getting the data and accounting for weird bugs that occur occasionally
+	finished = 0
+	while finished == 0:
+		try:
+			print("extracting data...")
+			#click the csv button
+			csvButton = driver.find_element_by_xpath("//a[@id='download-data-csv']")
+			csvButton.click()
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("data extracted")
+
+	# wait for the file to be downloaded
+	while(os.path.isfile(directoryT + "\\" + "GS10.csv") == False):
+		time.sleep(0.1)
+
+	# rename the files
+	os.rename(directoryT + "\\" + "GS10.csv", directoryT + "\\" +  "bonds.csv")
+
+	# quitting the driver
+	driver.quit()
+
+
+
