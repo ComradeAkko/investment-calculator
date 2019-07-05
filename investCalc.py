@@ -3,6 +3,8 @@
 #investCalc by ComradeAkko
 
 from priceExtractor import getTreasuryData, getStockData
+from datetime import datetime
+import csv, operator
 
 # returns the federal 2019 tax rate based on income
 def fedTax(income):
@@ -24,6 +26,10 @@ def fedTax(income):
 # calculates the current moving average based on the period
 # and the current date
 def movingAverage(period):
+
+
+def investCalc(ticker, income, investFrac, initial, strat, monthly):
+
 
 
 # calculate 200 day moving average
