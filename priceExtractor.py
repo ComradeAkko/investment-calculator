@@ -15,6 +15,7 @@ def concatURL(ticker):
 	base2 = "/history?p="
 	return base1 + ticker + base2 + ticker
 
+
 # creates a new directory with the ticker name and returns the path
 def newStockDirectory(ticker):
 	directoryPath = os.getcwd() + "\\stocks"
@@ -44,6 +45,7 @@ def newStockDirectory(ticker):
 
 	return directoryPath
 
+
 # creates a new bond directory or deletes previous data to make way for new bond data
 def newBondDirectory():
 	directoryPath = os.getcwd() + "\\bonds"
@@ -58,6 +60,7 @@ def newBondDirectory():
 			os.remove(directoryPath + "\\bonds.csv")
 		
 	return directoryPath
+
 
 # sorts data from the oldest date to the most recent date
 def sortData(filePath):
@@ -186,6 +189,7 @@ def getStockData(ticker):
 	# quitting the driver
 	driver.quit()
 
+
 # gets historical 10-year Treasury Bond yield data
 def getTreasuryData():
 	# I'm personally using the federal bank of St. Louis's 10-treasury bond yield data 
@@ -239,4 +243,3 @@ def getTreasuryData():
 
 	# quitting the driver
 	driver.quit()
-
