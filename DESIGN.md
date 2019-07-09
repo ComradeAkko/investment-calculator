@@ -2,9 +2,10 @@
 ### by ComradeAkko
 
 ## Classes
+```
 class Data:
     def __init__(self, otherData):
-        self.cash = 0
+        self.assets = 0
         self.cagr = 0
         self.taxes = 0
         self.comissions = 0
@@ -21,10 +22,12 @@ class nLot:
         self.amount = amount
         self.rate = rate
         self.date = date
+```
     
 
 # investCalc()
 
+```
 data = Data()
 
 If stock and bond data exists:
@@ -75,29 +78,38 @@ Else:
         Run getBondData
     
     run investCalc()
-
+```
 
 # isActive(strat)
+```
 If strat == MT || strat == GX:
     return True
 Else if strat == (PMT || DMT || GPM || GDM):
     return False
+```
 
 # cagr(bb, eb, n)
+```
 return eb^(1/n)/bb - 1
+```
 
 # BHdata()
+```
 Buy as many quantities of stock that can be bought + comission at 200th day
 record past price
 get most recent price
 data = Data()
 data.pl = (current price - past price) * quantity
 data.comissions = 5
-data.cash = cash + sLot*quantity
+data.assets = cash + sLot*quantity
 data.taxes = 0
 data.cagr = cagr()
 
+return data
+```
+
 # MTdata()
+```
 set initial date to the 200th period
 slot = sLot()
 nlot = nLot()
@@ -175,5 +187,8 @@ For every remaining period:
 
             add nlot to nList
 
-data.cash = is how much cash that is left
+data.assets = cash + every sLot(quantity*current price) + every nLot
 data.cagr = cagr()
+
+return data
+```
