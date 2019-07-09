@@ -25,10 +25,11 @@ def fedTax(income):
 
 # calculates the current moving average based on the period
 # and the current date
-def movingAverage(period):
+def movingAverage(period, date, data):
 
 
 def investCalc(ticker, income, investFrac, initial, strat, monthly):
+    
 
 
 
