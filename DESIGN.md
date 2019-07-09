@@ -10,10 +10,16 @@ class Data:
         self.comissions = 0
         self.pl = 0
 
-class Lot:
+class sLot:
     def __init__(self, price, quantity, date)
         self.price = price
         self.quantity = quantity
+        self.date = date
+
+class nLot:
+    def __init__(self, amount, rate, date)
+        self.amount = amount
+        self.rate = rate
         self.date = date
     
 
@@ -87,11 +93,87 @@ get most recent price
 data = Data()
 data.pl = (current price - past price) * quantity
 data.comissions = 5
-data.cash = is how much cash that is left
+data.cash = cash + sLot*quantity
 data.taxes = 0
 data.cagr = cagr()
 
 # MTdata()
 set initial date to the 200th period
+slot = sLot()
+nlot = nLot()
+sQueue = queue(sLots)
+
+For initial period:
+    cash -= comission
+    data.comission += comission
+
+    data.cash -= current price*quantity
+
+    slot.price = current price
+    slot.quantity = quantity
+    slot.date = current date
+    sQueue.in = slot
+
 For every remaining period:
-    If current period is above buy all possible 
+    if any of the nLots have reached 6months since their last payment/buying:
+        pay the yield into cash
+
+    if there are any stock splits:
+        go through queue and split the stocks
+
+    if there are any dividends put into cash
+        put into cash for every sLot
+
+        if cash is enough to buy:
+            cash -= comission
+            data.comission += comission
+
+            newLot = sLot()
+            newLot.price = current price
+            newLot.quantity = quantity
+            newLot.date = current date
+    
+    If current period is above or equal to 200sma:
+        If current money == nothing || bonds:
+            cash -= comission
+            data.comission += comission
+
+            data.cash -= current price*quantity
+
+            slot.price = current price
+            slot.quantity = quantity
+            slot.date = current date
+            sQueue.in = slot
+    Else:
+        If current money == nothing:
+            nlot.amount = money
+            nlot.rate = current rate
+            nlot.date = current date
+
+        Else if current money == stock:
+            cash -= commission
+            data.commission += comission
+            
+            For every sLot in sQueue:
+                sales = current price*quantity
+                If current price is high than sLot.price:
+                    If current date - sLot.date is less than a year:
+                        taxes = sales*tax bracket
+                    
+                    Else:
+                        taxes = sales * LTCGT
+
+                    total taxes += taxes
+                    sales -= taxes
+                
+                cash += sales
+            nlot = nLot()
+            
+            nlot.amount = money
+            nlot.rate = current rate
+            nlot.date = current date
+
+            add nlot to nList
+
+data.cash = is how much cash that is left
+data.cagr = cagr()
