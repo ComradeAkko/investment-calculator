@@ -37,6 +37,6 @@ def investCalc(ticker, income, investFrac, initial, strat, monthly):
 # calculate 50 day moving average
 # calculate buying and selling
 
-
+# rename bonds to notes
 # disclaimer about how the current model doesn't use historical data on tax rates
 # disclaimer about how the current model doesn't use historical capital gains tax rates 
