@@ -46,9 +46,9 @@ def newStockDirectory(ticker):
 	return directoryPath
 
 
-# creates a new bond directory or deletes previous data to make way for new bond data
-def newBondDirectory():
-	directoryPath = os.getcwd() + "\\bonds"
+# creates a new treasury note directory or deletes previous data to make way for new note data
+def newTreasuryDirectory():
+	directoryPath = os.getcwd() + "\\notes"
 
 	#if the directory doesn't exist, make it
 	if os.path.exists(directoryPath) == False:
@@ -56,8 +56,8 @@ def newBondDirectory():
 
 	# if the directory exists, delete the previous data to make way for new data
 	else:
-		if os.path.isfile(directoryPath + "\\bonds.csv"):
-			os.remove(directoryPath + "\\bonds.csv")
+		if os.path.isfile(directoryPath + "\\notes.csv"):
+			os.remove(directoryPath + "\\notes.csv")
 		
 	return directoryPath
 
@@ -190,12 +190,12 @@ def getStockData(ticker):
 	driver.quit()
 
 
-# gets historical 10-year Treasury Bond yield data
+# gets historical 10-year Treasury Note yield data
 def getTreasuryData():
-	# I'm personally using the federal bank of St. Louis's 10-treasury bond yield data 
+	# I'm personally using the federal bank of St. Louis's 10-treasury note yield data 
 	url = "https://fred.stlouisfed.org/series/GS10"
 
-	directoryT = newBondDirectory()
+	directoryT = newTreasuryDirectory()
 
 	# set downloading preferences
 	profile = webdriver.FirefoxProfile()
@@ -236,10 +236,10 @@ def getTreasuryData():
 		time.sleep(0.1)
 
 	# rename the file
-	os.rename(directoryT + "\\" + "GS10.csv", directoryT + "\\" +  "bonds.csv")
+	os.rename(directoryT + "\\" + "GS10.csv", directoryT + "\\" +  "notes.csv")
 
 	# sort data
-	sortData(directoryT + "\\" +  "bonds.csv")
+	sortData(directoryT + "\\" +  "notes.csv")
 
 	# quitting the driver
 	driver.quit()
