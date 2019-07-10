@@ -126,6 +126,11 @@ For initial period:
     slot.date = current date
     sQueue.in = slot
 
+For initial period if price is currently below 200-day moving average:
+    self.amount = cash
+    self.rate = current rate
+    self.date = current date
+
 For every remaining period:
     if any of the nLots have reached 6months since their last payment/buying:
         pay the yield into cash
@@ -191,4 +196,95 @@ data.assets = cash + every sLot(quantity*current price) + every nLot
 data.cagr = cagr()
 
 return data
+```
+
+# GXdata()
+```
+set initial date to the 200th period
+slot = sLot()
+nlot = nLot()
+sQueue = queue(sLots)
+
+For initial period if price is currently above 200-day moving average:
+    cash -= comission
+    data.comission += comission
+
+    data.cash -= current price*quantity
+
+    slot.price = current price
+    slot.quantity = quantity
+    slot.date = current date
+    sQueue.in = slot
+
+For initial period if price is currently below 200-day moving average:
+    self.amount = cash
+    self.rate = current rate
+    self.date = current date
+
+For every remaining period:
+    if any of the nLots have reached 6months since their last payment/buying:
+        pay the yield into cash
+
+    if there are any stock splits:
+        go through queue and split the stocks
+
+    if there are any dividends put into cash
+        put into cash for every sLot
+
+        if cash is enough to buy:
+            cash -= comission
+            data.comission += comission
+
+            newLot = sLot()
+            newLot.price = current price
+            newLot.quantity = quantity
+            newLot.date = current date
+    
+    If current period is above or equal to 200sma:
+        If current money == nothing || bonds:
+            cash -= comission
+            data.comission += comission
+
+            data.cash -= current price*quantity
+
+            slot.price = current price
+            slot.quantity = quantity
+            slot.date = current date
+            sQueue.in = slot
+    Else:
+        If current money == nothing:
+            nlot.amount = money
+            nlot.rate = current rate
+            nlot.date = current date
+
+        Else if current money == stock:
+            cash -= commission
+            data.commission += comission
+            
+            For every sLot in sQueue:
+                sales = current price*quantity
+                If current price is high than sLot.price:
+                    If current date - sLot.date is less than a year:
+                        taxes = sales*tax bracket
+                    
+                    Else:
+                        taxes = sales * LTCGT
+
+                    total taxes += taxes
+                    sales -= taxes
+                
+                cash += sales
+            nlot = nLot()
+            
+            nlot.amount = money
+            nlot.rate = current rate
+            nlot.date = current date
+
+            add nlot to nList
+
+data.assets = cash + every sLot(quantity*current price) + every nLot
+data.cagr = cagr()
+
+return data
+
 ```
