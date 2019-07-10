@@ -4,13 +4,13 @@
 The following are the investment strategies that can be used with the function `investCalc()`. Static strategies are ones where the only capital used is the initial capital. Active strategies include monthly payments. 
 
 ## Static Strategies
-### Buy and hold (BH):
+### Buy and Hold (BH):
 After an initial investment, the shares are held for the entirety of its period.
 
-### Regular Momentum trading (MT):
+### Regular Momentum Trading (MT):
 After an intial investment, the shares are held as long as the price is above its 200-day moving average. If the price is below its 200-day moving average, it is sold and transferred to bonds.
 
-## Golden-Cross Momentum trading (GX):
+## Golden-Cross Momentum Trading (GX):
 After an initial investment, shares are held when the price is above both its 200-day and 50-day moving average. If the 50-day moving average crosses below the 200-day moving average, the shares are sold and transferred to bonds.
 
 ## Active Strategies

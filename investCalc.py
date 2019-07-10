@@ -5,8 +5,11 @@
 from priceExtractor import getTreasuryData, getStockData, newStockDirectory, newTreasuryDirectory
 from datetime import datetime
 import csv, operator
+import math
 
-# classes:
+# Classes:
+
+# stores data for easy returning of data
 class Data:
     def __init__(self, otherData):
         self.assets = 0
@@ -15,12 +18,14 @@ class Data:
         self.comissions = 0
         self.pl = 0
 
+# records the data for each purchase of the stock
 class Slot:
     def __init__(self, price, quantity, date)
         self.price = price
         self.quantity = quantity
         self.date = date
 
+# records data for each purchase of a 10 year treasury note
 class Nlot:
     def __init__(self, amount, rate, date)
         self.amount = amount
@@ -44,16 +49,24 @@ def fedTax(income):
     else:
         return .37
 
+# calculates compound annual growth rate
+def cagr(bb, eb, n):
+    return (eb^(1/n))/bb - 1
+
 # calculates the current moving average based on the period
 # and the current date
 def movingAverage(period, date, data):
 
+# returns data for the Buy and Hold strat
+def BH(ticker, baseSMA, cash, commission):
+    cash -= commission
 
-def MT(ticker):
 
-def GX(ticker):
+def MT(ticker, baseSMA, cash, commission):
 
-def investCalc(ticker, baseSMA = 200, income, investFrac, initial, strat, monthly):
+def GX(ticker, baseSMA, cash, commission):
+
+def investCalc(ticker, baseSMA = 200, initial, income, investFrac, aigr, strat, monthly, commission = 5):
     stockPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker
     notesPath = os.getcwd() + "\\notes\\notes.csv"
 
@@ -70,11 +83,11 @@ def investCalc(ticker, baseSMA = 200, income, investFrac, initial, strat, monthl
     # counting the number of data points available
     rowCount = sum(1 for row in priceData)
 
-    # 
+    # if the there are enough data points for the SMA being used
     if rowCount > baseSMA:
         if strat == "MT":
-            MTdata = MT()
-            BHdata = BH()
+            MTdata = MT(ticker, baseSMA, commission)
+            BHdata = BH(ticker, baseSMA, commission)
         
         else if strat == "GX":
             GXdata = GX()
