@@ -97,6 +97,10 @@ return eb^(1/n)/bb - 1
 ```
 Buy as many quantities of stock that can be bought + comission at 200th day
 record past price
+    Queue?
+        Is very dependent 
+    Function?
+        Allows fast finding of data without too much down time
 get most recent price
 data = Data()
 data.pl = (current price - past price) * quantity
