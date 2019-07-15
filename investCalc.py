@@ -55,11 +55,59 @@ def cagr(bb, eb, n):
 
 # calculates the current moving average based on the period
 # and the current date
-def movingAverage(period, date, data):
+def movingAverage(period, date, dataPath):
+    # get the csv file
+    data = csv.reader(open(dataPath))
+    index = 0
+
+    # figure out which index holds the current date
+    for count, row in enumerate(data):
+        if date == row[0]:
+            index = count
+            break
+
+    # isolate the relevant rows
+    movingAverageRows = [row for idx, row in enumerate(reader) if idx in (index - period,index)]
+
+    # calculate the current sum
+    sum = 0
+    for row in movingAverageRows:
+        sum += row[4]
+    
+    # get the average
+    SMA = sum/period
+    
+    return SMA
+
 
 # returns data for the Buy and Hold strat
 def BH(ticker, baseSMA, cash, commission):
+    # initialize the data
+    data = Data()
+
+    # account for comissions
     cash -= commission
+    data.comissions += commission
+
+    #create the file path
+    pricePath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_price.csv"
+    
+    # get the csv file
+    prices = csv.reader(open(pricePath))
+
+    #skip the first 200 days
+    for i in range(200)
+        next(prices)
+
+        # use a queue?
+            #queue allows for a 
+
+        # use the function?
+    
+
+    
+
+
 
 
 def MT(ticker, baseSMA, cash, commission):
