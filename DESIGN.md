@@ -4,12 +4,15 @@
 ## Classes
 ```
 class Data:
-    def __init__(self, otherData):
+    def __init__(self):
         self.assets = 0
         self.cagr = 0
         self.taxes = 0
         self.comissions = 0
         self.pl = 0
+        self.div = 0
+        self.initial = 0
+        self.iDate = 0
 
 class sLot:
     def __init__(self, price, quantity, date)
@@ -97,10 +100,6 @@ return eb^(1/n)/bb - 1
 ```
 Buy as many quantities of stock that can be bought + comission at 200th day
 record past price
-    Queue?
-        Is very dependent 
-    Function?
-        Allows fast finding of data without too much down time
 get most recent price
 data = Data()
 data.pl = (current price - past price) * quantity
