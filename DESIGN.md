@@ -1,10 +1,13 @@
 # Design.md
 ### by ComradeAkko
 
+Includes preliminary design, actual implementation may differ from design
+
 ## Classes
 ```
 class Data:
     def __init__(self):
+        self.type = 0
         self.assets = 0
         self.cagr = 0
         self.taxes = 0
@@ -13,6 +16,7 @@ class Data:
         self.div = 0
         self.initial = 0
         self.iDate = 0
+        self.pDate = 0
 
 class sLot:
     def __init__(self, price, quantity, date)
