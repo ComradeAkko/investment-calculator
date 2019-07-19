@@ -148,6 +148,39 @@ def cagr(bb, eb, initialDate, currentDate):
     # return cagr
     return (eb^(1/n))/bb - 1
 
+# returns the number of days between two dates
+def diffDays(d1, d2):
+    d1 = datetime.strptime(d1, "%Y-%m-%d")
+    d2 = datetime.strptime(d2, "%Y-%m-%d")
+    delta = d2 - d1
+    return delta.days
+
+# returns the number of months between two dates
+def diffMonths(d1, d2):
+    d1 = datetime.strptime(d1, "%Y-%m-%d")
+    d2 = datetime.strptime(d2, "%Y-%m-%d")
+    delta = d2 - d1
+    return delta.months
+
+# returns the percentage taxed as capital gains
+def capitalGains(d1,d2, income):
+    # get the number of the days between purchase and selling
+    delta = diffDays(d1,d2)
+
+    # if the stock has been held for less than a year
+    if delta < 365:
+        return fedTax(income)
+    
+    # if the stock has been for a year at least
+    # return a tax bracket based on income
+    else:
+        if income <= 39375:
+            return 0
+        else if income <= 434550:
+            return .15
+        else:
+            return .2
+
 # calculates the current moving average based on the period
 # and the current date
 def movingAverage(period, date, dataPath):
@@ -295,35 +328,47 @@ def MT(ticker, baseSMA, income, cash, commission):
     # calculate the current moving average
     sma = movingAverage(baseSMA, price[0][0], pricePath)
 
+    # initialize the stock and note lots
+    slot = Slot()
+    nlot = Nlot()
+
+    # get the current date and record it in the data
+    date = prices[0][0]
+    data.iDate = date
+    
+    # get the current month
+    currD = prices[i][0]
+    currD = datetime.strptime(cuurD, "%Y-%m-%d")
+    month = currD.month
+
     # if the closing price of the previous day is greater than or equal to the sma
     if prices[0][4] >= sma:
+        # account for comissions
+        cash -= commission
+        data.comissions += commission
+
         # buy the stock at the current price
-        slot = Slot()
         slot.price = prices[1][1]
-        slot.quantity = math.floor(cash/price)
+        slot.quantity = math.floor(cash/slot.price)
         slot.date = prices[1][0]
         
         # subtract the amount used
         cash -= slot.price * slot.quantity
 
-        # account for comissions
-        cash -= commission
-        data.comissions += commission
 
         # mark the boolean for keeping track of whether stocks or bonds have been bought
         boughtStock = True
     
     # if the current opening price is less than the sma
     else:
-        # buy treasury notes
-        nlot = Nlot()
-        nlot.rate = getNoteYield(prices[1][0], notePath)
-        nlot.amount = cash
-        nlot.date = prices[1][0]
-
         # account for comissions
         cash -= commission
         data.comissions += commission
+
+        # buy treasury notes
+        nlot.rate = getNoteYield(prices[1][0], notePath)
+        nlot.amount = cash
+        nlot.date = prices[1][0]
 
         boughtStock = False
 
@@ -333,14 +378,135 @@ def MT(ticker, baseSMA, income, cash, commission):
         # calculate the current moving average
         sma = movingAverage(baseSMA, price[i][0], pricePath)
 
-        # if the current price is greater than or equal to the sma
-        if prices[i][0] >= sma:
+        # get the current date
+        currentDate = prices[i][0]
+        currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
 
+        # check if the current month is a different month compared to the last date
+        if month != currentDate.month:
+            month = currentDate.month
+            checked = False
 
+        # if the current date is after the tenth and stocks have not been checked
+        # for this current month yet
+        if currentDate.day >= 10 and checked == False:
+            # set checked boolean to true
+            checked = True
 
+            # if the current closing price is less than the sma
+            if prices[i][4] < sma:
+                # if stocks were bought and there is enough a data points to get a price to sell
+                if boughtStock and i+1 < len(prices):
+                    stockEarnings = prices[i+1][1] * slot.quantity
 
+                    # calculate capital gains tax
+                    gainsTax = capitalGains(slot.date, prices[i+1][0], income)
+                    
+                    # account for taxes
+                    stockEarnings *= 1-gainsTax
+                    data.taxes += stockEarnings*gainsTax
 
+                    # account for comissions
+                    stockEarnings -= commission*2
+                    data.comissions += commission*2
+
+                    # account for the profit/loss
+                    data.pl += (prices[i+1][1] - slot.price) * slot.quantity
+                    cash += stockEarnings
+
+                    # reset the slot
+                    slot.price = 0
+                    slot.quantity = 0
+                    slot.date = 0
+
+                    # convert the cash to treasury note
+                    nlot.amount = cash
+                    cash -= nlot.amount
+                    nlot.rate = getNoteYield(prices[i+1][0], notePath)
+                    note.date = prices[i+1][0]
+
+                    # mark the boolean for keeping track of whether stocks or bonds have been bought
+                    boughtStock = False
+
+                # if stocks were not bought and the current closing price is less than the sma
+                else:
+                    # if it has been 6 months since the last purchase/payment
+                    if diffMonths(prices[i][0], nlot.date) % 6 == 0:
+                        cash += nlot.amount * (nlot.rate/100/2)
+            
+            # if the current closing price is greater than the sma
+            else:
+                # and if stocks were not bought and there are enough data points to gather data from
+                if boughtStock == False and i+1 < len(prices):
+                    # convert treasury yields into cash
+                    cash += nlot.amount
+
+                    # reset the nlot
+                    nlot.amount = 0
+                    nlot.date = 0
+                    nlot.rate = 0
+
+                    # account for comissions
+                    stockEarnings -= commission*2
+                    data.comissions += commission*2
+
+                    # buy the stock at the current price
+                    slot.price = prices[i+1][1]
+                    slot.quantity = math.floor(cash/slot.price)
+                    slot.date = prices[1][0]
+
+                    # subtract the amount used
+                    cash -= slot.price * slot.quantity
+
+                    # mark the boolean for keeping track of whether stocks or bonds have been bought
+                    boughtStock = True
+
+                # if stocks were bought and the current closing price is greater than or equal to the sma
+                else:
+                    # if there is any data for splitting stocks
+                    if dataExists(splits):
+                        # if any of the dates appear in the stock split data
+                        if timeExists(prices[i][0],splitPath):
+                            # get the fraction of splitting
+                            fraction = getDivSplit(prices[i][0], splitPath)
+                            slot.quantity = math.floor(slot.quantity / fraction)
+                    
+                    # if there is any data for dividends
+                    if dataExists(dividends):
+                        # if any of the dates appear in the dividend data
+                        if timeExists(prices[i][0], divPath):
+                            # get the dividend for the day and calculate the money gained
+                            d = getDivSplit(prices[i][0], divPath)
+                            cash += d * slot.quantity * (1 - divTax(fedTax(income)))
+
+                            # record the dividends into data
+                            data.div += d * slot.quantity * (1 - divTax(fedTax(income)))
+
+                            # record the taxes paid
+                            data.taxes += d * slot.quantity * divTax(fedTax(income))
+
+    if boughtStock == True:
+        # calculate profit/loss
+        data.pl += (prices[-1][4] - slot.price) * slot.quantity
+
+        # calculate total assets
+        data.assets = cash + (prices[-1][4] * slot.quantity)
     
+    else:
+        # calculate total assets
+        data.assets = cash + nlot.amount
+
+    # calculate cagr
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+
+    # close file
+    priceF.close()
+
+    return data
+
+
+
+
 
 
 def GX(ticker, baseSMA, cash, commission):
