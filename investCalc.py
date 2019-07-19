@@ -12,6 +12,7 @@ import csv, operator, math, os
 # stores data for easy returning of data
 class Data:
     def __init__(self):
+        self.type = 0
         self.initial = 0
         self.assets = 0
         self.cagr = 0
@@ -20,6 +21,7 @@ class Data:
         self.pl = 0
         self.div = 0
         self.iDate = 0
+        self.pDate = 0
 
 # records the data for each purchase of the stock
 class Slot:
@@ -215,6 +217,7 @@ def movingAverage(period, date, dataPath):
 def BH(ticker, cash, income, commission):
     # initialize the data
     data = Data()
+    data.type = "Buy and hold"
 
     #set initial cash
     data.initial = cash
@@ -291,6 +294,9 @@ def BH(ticker, cash, income, commission):
     # calculate cagr
     data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
 
+    # record the last date
+    data.pDate = prices[-1][0]
+
     # close file
     priceF.close()
 
@@ -298,12 +304,13 @@ def BH(ticker, cash, income, commission):
 
 
 
-def MT(ticker, baseSMA, income, cash, commission):
+def MT(ticker, cash, income, baseSMA, commission):
     # initialize the data
     data = Data()
+    data.type = "Momentum trading"
 
     #set initial cash
-    data.initial = cash
+    data.initial = initial
 
     #create the file paths
     pricePath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_price.csv"
@@ -498,18 +505,32 @@ def MT(ticker, baseSMA, income, cash, commission):
 
     # calculate cagr
     data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    
+    # record the last date
+    data.pDate = prices[-1][0]
 
     # close file
     priceF.close()
 
     return data
 
+# prints results from testing
+def printResults(data1, data2):
+    print("From " + data1.iDate " to " + data1.pDate + " the strategies " + data1.type " and " + data2.type " were compared:")
+    print("with a starting value of $" + str(data1.initial) + "...")
+    print(data1.type + " strategy had a final value of $" + str(data1.assets) + " with a profit/loss of $" + str(data1.pl))
+    print("A total of $" + str(data1.div) + " was paid in dividends.")
+    print("A total of $" + str(data1.taxes) + " was paid in taxes.")
+    print("A total of $" + str(data1.comissions) + " was paid in comissions.")
+    print(data1.type + " strategy had a compound annual growth rate of " + str(data1.cagr))
+    print(" ")
+    print(data2.type + " strategy had a final value of $" + str(data2.assets) + " with a profit/loss of $" + str(data2.pl))
+    print("A total of $" + str(data2.div) + " was paid in dividends.")
+    print("A total of $" + str(data2.taxes) + " was paid in taxes.")
+    print("A total of $" + str(data2.comissions) + " was paid in comissions.")
+    print(data2.type + " strategy had a compound annual growth rate of " + str(data2.cagr))
 
 
-
-
-
-def GX(ticker, baseSMA, cash, commission):
 
 def investCalc(ticker, baseSMA = 200, initial, income, investFrac, aigr, strat, monthly, commission = 5):
     stockPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker
@@ -527,20 +548,21 @@ def investCalc(ticker, baseSMA = 200, initial, income, investFrac, aigr, strat, 
     # if the there are enough data points for the SMA being used
     if dataExists(stockPricePath, baseSMA):
         if strat == "MT":
-            MTdata = MT(ticker, baseSMA, commission)
+            MTdata = MT(ticker, initial, income, baseSMA, commission)
             BHdata = BH(ticker, initial, income, commission)
+            printResults(BHdata, MTdata)
         
-        else if strat == "GX":
-            GXdata = GX()
-            BHdata = BH()
+        # else if strat == "GX":
+        #     GXdata = GX()
+        #     BHdata = BH()
         
-        else if strat == "DMT":
+        # else if strat == "DMT":
         
-        else if strat == "PMT":
+        # else if strat == "PMT":
 
-        else if strat == "GPM":
+        # else if strat == "GPM":
 
-        else if strat == "GDM":
+        # else if strat == "GDM":
 
         else:
             print("strategy does not exist, please input a valid strategy")
