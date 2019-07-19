@@ -90,6 +90,25 @@ def getDivSplit(date,dataPath):
             file.close()
             return row[1]
 
+# returns the 10 year treasury note yield for stated month
+def getNoteYield(date, datapath)
+    file = open(dataPath)
+    data = csv.reader(file)
+    
+    # convert the current date into datetime format
+    currDate = datetime.strptime(date, "%Y-%m-%d")
+
+    # cycles through the row till it finds the relevant date
+    for row in data:
+        # convert csv dates to datetime format
+        rowDate = datetime.strptime(row[0], "%Y-%m-%d")
+
+        # if the year and month match, return the treasury yield rate
+        if rowDate.month == currDate.month and rowDate.year == currDate.year:
+            file.close()
+            return row[1]
+    
+
 
 # returns the federal 2019 tax rate based on income
 def fedTax(income):
@@ -160,7 +179,7 @@ def movingAverage(period, date, dataPath):
 
 
 # returns data for the Buy and Hold strat
-def BH(ticker, baseSMA, cash, income, commission):
+def BH(ticker, cash, income, commission):
     # initialize the data
     data = Data()
 
@@ -179,17 +198,9 @@ def BH(ticker, baseSMA, cash, income, commission):
     # get the csv file
     priceF = open(pricePath)
     prices = csv.reader(priceF)
-    
-    divF = open(divPath)
-    dividends = csv.reader(divF)
 
-    splitF = open(splitPath)
-    splits = csv.reader(splitF)
-
-    # skipping the headers
+    # skipping the header
     next(prices)
-    next(dividends)
-    next(splits)
 
     # skip the first 200 days
     for i in range(200)
@@ -206,6 +217,9 @@ def BH(ticker, baseSMA, cash, income, commission):
 
     # get the quantity of how many stocks you can buy
     quantity = math.floor(cash/price)
+
+    # subtract the amount that I bought from the cash
+    cash -= price * quantity
 
     # store in the information in a stock lot
     slot = Slot(price, quantity, date)
@@ -244,16 +258,90 @@ def BH(ticker, baseSMA, cash, income, commission):
     # calculate cagr
     data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
 
-    # close files
+    # close file
     priceF.close()
-    divF.close()
-    splitF.close()
 
     return data
 
 
 
-def MT(ticker, baseSMA, cash, commission):
+def MT(ticker, baseSMA, income, cash, commission):
+    # initialize the data
+    data = Data()
+
+    #set initial cash
+    data.initial = cash
+
+    #create the file paths
+    pricePath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_price.csv"
+    divPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_dividend.csv"
+    splitPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_split.csv"
+    notePath = os.getcwd() + "\\notes\\notes.csv"
+    
+    # get the csv file
+    priceF = open(pricePath)
+    prices = csv.reader(priceF)
+
+    # skipping the header
+    next(prices)
+
+    # skip the first 200 days
+    for i in range(199)
+        next(prices)
+    
+    # listify the csv.reader file
+    prices = list(prices)
+
+    # calculate the current moving average
+    sma = movingAverage(baseSMA, price[0][0], pricePath)
+
+    # if the closing price of the previous day is greater than or equal to the sma
+    if prices[0][4] >= sma:
+        # buy the stock at the current price
+        slot = Slot()
+        slot.price = prices[1][1]
+        slot.quantity = math.floor(cash/price)
+        slot.date = prices[1][0]
+        
+        # subtract the amount used
+        cash -= slot.price * slot.quantity
+
+        # account for comissions
+        cash -= commission
+        data.comissions += commission
+
+        # mark the boolean for keeping track of whether stocks or bonds have been bought
+        boughtStock = True
+    
+    # if the current opening price is less than the sma
+    else:
+        # buy treasury notes
+        nlot = Nlot()
+        nlot.rate = getNoteYield(prices[1][0], notePath)
+        nlot.amount = cash
+        nlot.date = prices[1][0]
+
+        # account for comissions
+        cash -= commission
+        data.comissions += commission
+
+        boughtStock = False
+
+
+    # for every remaining price data
+    for i in range(1, len(prices)):
+        # calculate the current moving average
+        sma = movingAverage(baseSMA, price[i][0], pricePath)
+
+        # if the current price is greater than or equal to the sma
+        if prices[i][0] >= sma:
+
+
+
+
+
+    
+
 
 def GX(ticker, baseSMA, cash, commission):
 
@@ -274,7 +362,7 @@ def investCalc(ticker, baseSMA = 200, initial, income, investFrac, aigr, strat, 
     if dataExists(stockPricePath, baseSMA):
         if strat == "MT":
             MTdata = MT(ticker, baseSMA, commission)
-            BHdata = BH(ticker, baseSMA, commission)
+            BHdata = BH(ticker, initial, income, commission)
         
         else if strat == "GX":
             GXdata = GX()
@@ -302,6 +390,5 @@ def investCalc(ticker, baseSMA = 200, initial, income, investFrac, aigr, strat, 
 
 # calculate buying and selling
 
-# rename bonds to notes
 # disclaimer about how the current model doesn't use historical data on tax rates
 # disclaimer about how the current model doesn't use historical capital gains tax rates 
