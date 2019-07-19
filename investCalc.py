@@ -95,8 +95,11 @@ def getDivSplit(date,dataPath):
 
 # returns the 10 year treasury note yield for stated month
 def getNoteYield(date, datapath):
-    file = open(dataPath)
+    file = open(datapath)
     data = csv.reader(file)
+
+    #skip the header
+    next(data)
     
     # convert the current date into datetime format
     currDate = datetime.strptime(date, "%Y-%m-%d")
@@ -163,8 +166,7 @@ def diffDays(d1, d2):
 def diffMonths(d1, d2):
     d1 = datetime.strptime(d1, "%Y-%m-%d")
     d2 = datetime.strptime(d2, "%Y-%m-%d")
-    delta = d2 - d1
-    return delta.months
+    return (d1.year - d2.year) * 12 + d1.month - d2.month
 
 # returns the percentage taxed as capital gains
 def capitalGains(d1,d2, income):
@@ -193,14 +195,17 @@ def movingAverage(period, date, dataPath):
     data = csv.reader(file)
     index = 0
 
+    # listify the data
+    data = list(data)
+
     # figure out which index holds the current date
-    for count, row in enumerate(data):
-        if date == row[0]:
-            index = count
+    for i in range(1, len(data)):
+        if date == data[i][0]:
+            index = i
             break
 
     # isolate the relevant rows
-    movingAverageRows = [row for idx, row in enumerate(data) if idx in (index - period,index)]
+    movingAverageRows = data[index-period:index]
 
     # calculate the current sum
     sum = 0
@@ -331,7 +336,7 @@ def MT(ticker, cash, income, baseSMA, commission):
     next(prices)
 
     # skip the first 200 days
-    for i in range(199):
+    for i in range(200):
         next(prices)
     
     # listify the csv.reader file
@@ -409,7 +414,7 @@ def MT(ticker, cash, income, baseSMA, commission):
             if float(prices[i][4]) < sma:
                 # if stocks were bought and there is enough a data points to get a price to sell
                 if boughtStock and i+1 < len(prices):
-                    stockEarnings = prices[i+1][1] * slot.quantity
+                    stockEarnings = float(prices[i+1][1]) * slot.quantity
 
                     # calculate capital gains tax
                     gainsTax = capitalGains(slot.date, prices[i+1][0], income)
@@ -423,7 +428,7 @@ def MT(ticker, cash, income, baseSMA, commission):
                     data.comissions += commission*2
 
                     # account for the profit/loss
-                    data.pl += (prices[i+1][1] - slot.price) * slot.quantity
+                    data.pl += (float(prices[i+1][1]) - slot.price) * slot.quantity
                     cash += stockEarnings
 
                     # reset the slot
@@ -435,7 +440,7 @@ def MT(ticker, cash, income, baseSMA, commission):
                     nlot.amount = cash
                     cash -= nlot.amount
                     nlot.rate = getNoteYield(prices[i+1][0], notePath)
-                    note.date = prices[i+1][0]
+                    nlot.date = prices[i+1][0]
 
                     # mark the boolean for keeping track of whether stocks or bonds have been bought
                     boughtStock = False
@@ -463,7 +468,7 @@ def MT(ticker, cash, income, baseSMA, commission):
                     data.comissions += commission*2
 
                     # buy the stock at the current price
-                    slot.price = prices[i+1][1]
+                    slot.price = float(prices[i+1][1])
                     slot.quantity = math.floor(cash/slot.price)
                     slot.date = prices[1][0]
 
