@@ -25,23 +25,23 @@ class Data:
 
 # records the data for each purchase of the stock
 class Slot:
-    def __init__(self, price, quantity, date)
-        self.price = price
-        self.quantity = quantity
-        self.date = date
+    def __init__(self):
+        self.price = 0
+        self.quantity = 0
+        self.date = 0
 
 # records data for each purchase of a 10 year treasury note
 class Nlot:
-    def __init__(self, amount, rate, date)
-        self.amount = amount
-        self.rate = rate
-        self.date = date
+    def __init__(self):
+        self.amount = 0
+        self.rate = 0
+        self.date = 0
 
 # returns a boolean based on whether the csv file contains data
 def dataExists(datePath, limit = 1):
     # opening the file
     file = open(datePath)
-    data = csv.reader(Path)
+    data = csv.reader(file)
 
     # summing up the number of rows
     rowCount = sum(1 for row in data)
@@ -89,11 +89,12 @@ def getDivSplit(date,dataPath):
     # cycles through the row till it finds the relevant date
     for row in data:
         if row[0] == date:
+            divsplit = float(row[1])
             file.close()
-            return row[1]
+            return divsplit
 
 # returns the 10 year treasury note yield for stated month
-def getNoteYield(date, datapath)
+def getNoteYield(date, datapath):
     file = open(dataPath)
     data = csv.reader(file)
     
@@ -107,8 +108,9 @@ def getNoteYield(date, datapath)
 
         # if the year and month match, return the treasury yield rate
         if rowDate.month == currDate.month and rowDate.year == currDate.year:
+            rate = float(row[1])
             file.close()
-            return row[1]
+            return rate
     
 
 
@@ -116,15 +118,15 @@ def getNoteYield(date, datapath)
 def fedTax(income):
     if income <= 9700:
         return .1
-    else if income <= 39745:
+    elif income <= 39745:
         return .12
-    else if income <= 84200:
+    elif income <= 84200:
         return .22
-    else if income <= 160725:
+    elif income <= 160725:
         return .24
-    else if income <= 204100:
+    elif income <= 204100:
         return .32
-    else if income <= 510300:
+    elif income <= 510300:
         return .35
     else:
         return .37
@@ -133,7 +135,7 @@ def fedTax(income):
 def divTax(bracket):
     if bracket <.25:
         return 0
-    else if bracket < .35:
+    elif bracket < .35:
         return .15
     else:
         return .2
@@ -148,7 +150,7 @@ def cagr(bb, eb, initialDate, currentDate):
     n = currentDate.year - initialDate.year
 
     # return cagr
-    return (eb^(1/n))/bb - 1
+    return (eb**(1/n))/bb - 1
 
 # returns the number of days between two dates
 def diffDays(d1, d2):
@@ -178,7 +180,7 @@ def capitalGains(d1,d2, income):
     else:
         if income <= 39375:
             return 0
-        else if income <= 434550:
+        elif income <= 434550:
             return .15
         else:
             return .2
@@ -198,12 +200,12 @@ def movingAverage(period, date, dataPath):
             break
 
     # isolate the relevant rows
-    movingAverageRows = [row for idx, row in enumerate(reader) if idx in (index - period,index)]
+    movingAverageRows = [row for idx, row in enumerate(data) if idx in (index - period,index)]
 
     # calculate the current sum
     sum = 0
     for row in movingAverageRows:
-        sum += row[4]
+        sum += float(row[4])
     
     # get the average
     SMA = sum/period
@@ -239,16 +241,17 @@ def BH(ticker, cash, income, commission):
     next(prices)
 
     # skip the first 200 days
-    for i in range(200)
+    for i in range(200):
         next(prices)
 
-    buyRow = next(prices)
+    # listify the csv file 
+    prices = list(prices)
     
     # get the opening price for the 201st day
-    price = buyRow[1]
+    price = float(prices[0][1])
     
     # get the current date and record it in the data
-    date = buyRow[0]
+    date = prices[0][0]
     data.iDate = date
 
     # get the quantity of how many stocks you can buy
@@ -258,24 +261,27 @@ def BH(ticker, cash, income, commission):
     cash -= price * quantity
 
     # store in the information in a stock lot
-    slot = Slot(price, quantity, date)
+    slot = Slot()
+    slot.price = price
+    slot.quantity = quantity
+    slot.date = date
 
     # for every price, check to see if there was a stock split or a dividend issued
-    for row in prices:
+    for i in range(1, len(prices)):
         # if there is any data for splitting stocks
-        if dataExists(splits):
+        if dataExists(splitPath):
             # if any of the dates appear in the stock split data
-            if timeExists(row[0],splitPath):
+            if timeExists(prices[i][0],splitPath):
                 # get the fraction of splitting
-                fraction = getDivSplit(row[0], splitPath)
+                fraction = getDivSplit(prices[i][0], splitPath)
                 slot.quantity = math.floor(slot.quantity / fraction)
         
         # if there is any data for dividends
-        if dataExists(dividends):
+        if dataExists(divPath):
             # if any of the dates appear in the dividend data
-            if timeExists(row[0], divPath):
+            if timeExists(prices[i][0], divPath):
                 # get the dividend for the day and calculate the money gained
-                d = getDivSplit(row[0], divPath)
+                d = getDivSplit(prices[i][0], divPath)
                 cash += d * slot.quantity * (1 - divTax(fedTax(income)))
 
                 # record the dividends into data
@@ -284,12 +290,11 @@ def BH(ticker, cash, income, commission):
                 # record the taxes paid
                 data.taxes += d * slot.quantity * divTax(fedTax(income))
     
-    prices = list(prices)
     # calculate profit/loss
-    data.pl = (prices[-1][4] - slot.price) * slot.quantity
+    data.pl = (float(prices[-1][4]) - slot.price) * slot.quantity
 
     # calculate total assets
-    data.assets = cash + (prices[-1][4] * slot.quantity)
+    data.assets = cash + (float(prices[-1][4]) * slot.quantity)
 
     # calculate cagr
     data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
@@ -310,7 +315,7 @@ def MT(ticker, cash, income, baseSMA, commission):
     data.type = "Momentum trading"
 
     #set initial cash
-    data.initial = initial
+    data.initial = cash
 
     #create the file paths
     pricePath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_price.csv"
@@ -326,14 +331,14 @@ def MT(ticker, cash, income, baseSMA, commission):
     next(prices)
 
     # skip the first 200 days
-    for i in range(199)
+    for i in range(199):
         next(prices)
     
     # listify the csv.reader file
     prices = list(prices)
 
     # calculate the current moving average
-    sma = movingAverage(baseSMA, price[0][0], pricePath)
+    sma = movingAverage(baseSMA, prices[0][0], pricePath)
 
     # initialize the stock and note lots
     slot = Slot()
@@ -345,17 +350,17 @@ def MT(ticker, cash, income, baseSMA, commission):
     
     # get the current month
     currD = prices[i][0]
-    currD = datetime.strptime(cuurD, "%Y-%m-%d")
+    currD = datetime.strptime(currD, "%Y-%m-%d")
     month = currD.month
 
     # if the closing price of the previous day is greater than or equal to the sma
-    if prices[0][4] >= sma:
+    if float(prices[0][4]) >= sma:
         # account for comissions
         cash -= commission
         data.comissions += commission
 
         # buy the stock at the current price
-        slot.price = prices[1][1]
+        slot.price = float(prices[1][1])
         slot.quantity = math.floor(cash/slot.price)
         slot.date = prices[1][0]
         
@@ -383,7 +388,7 @@ def MT(ticker, cash, income, baseSMA, commission):
     # for every remaining price data
     for i in range(1, len(prices)):
         # calculate the current moving average
-        sma = movingAverage(baseSMA, price[i][0], pricePath)
+        sma = movingAverage(baseSMA, prices[i][0], pricePath)
 
         # get the current date
         currentDate = prices[i][0]
@@ -401,7 +406,7 @@ def MT(ticker, cash, income, baseSMA, commission):
             checked = True
 
             # if the current closing price is less than the sma
-            if prices[i][4] < sma:
+            if float(prices[i][4]) < sma:
                 # if stocks were bought and there is enough a data points to get a price to sell
                 if boughtStock and i+1 < len(prices):
                     stockEarnings = prices[i+1][1] * slot.quantity
@@ -471,7 +476,7 @@ def MT(ticker, cash, income, baseSMA, commission):
                 # if stocks were bought and the current closing price is greater than or equal to the sma
                 else:
                     # if there is any data for splitting stocks
-                    if dataExists(splits):
+                    if dataExists(splitPath):
                         # if any of the dates appear in the stock split data
                         if timeExists(prices[i][0],splitPath):
                             # get the fraction of splitting
@@ -479,7 +484,7 @@ def MT(ticker, cash, income, baseSMA, commission):
                             slot.quantity = math.floor(slot.quantity / fraction)
                     
                     # if there is any data for dividends
-                    if dataExists(dividends):
+                    if dataExists(divPath):
                         # if any of the dates appear in the dividend data
                         if timeExists(prices[i][0], divPath):
                             # get the dividend for the day and calculate the money gained
@@ -494,10 +499,10 @@ def MT(ticker, cash, income, baseSMA, commission):
 
     if boughtStock == True:
         # calculate profit/loss
-        data.pl += (prices[-1][4] - slot.price) * slot.quantity
+        data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
 
         # calculate total assets
-        data.assets = cash + (prices[-1][4] * slot.quantity)
+        data.assets = cash + (float(prices[-1][4]) * slot.quantity)
     
     else:
         # calculate total assets
@@ -516,7 +521,7 @@ def MT(ticker, cash, income, baseSMA, commission):
 
 # prints results from testing
 def printResults(data1, data2):
-    print("From " + data1.iDate " to " + data1.pDate + " the strategies " + data1.type " and " + data2.type " were compared:")
+    print("From " + data1.iDate + " to " + data1.pDate + " the strategies " + data1.type + " and " + data2.type + " were compared:")
     print("with a starting value of $" + str(data1.initial) + "...")
     print(data1.type + " strategy had a final value of $" + str(data1.assets) + " with a profit/loss of $" + str(data1.pl))
     print("A total of $" + str(data1.div) + " was paid in dividends.")
@@ -532,7 +537,7 @@ def printResults(data1, data2):
 
 
 
-def investCalc(ticker, baseSMA = 200, initial, income, investFrac, aigr, strat, monthly, commission = 5):
+def investCalc(ticker, initial, income, strat, baseSMA = 200, commission = 5):
     stockPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker
     notesPath = os.getcwd() + "\\notes\\notes.csv"
 
@@ -552,17 +557,17 @@ def investCalc(ticker, baseSMA = 200, initial, income, investFrac, aigr, strat, 
             BHdata = BH(ticker, initial, income, commission)
             printResults(BHdata, MTdata)
         
-        # else if strat == "GX":
+        # elif strat == "GX":
         #     GXdata = GX()
         #     BHdata = BH()
         
-        # else if strat == "DMT":
+        # elif strat == "DMT":
         
-        # else if strat == "PMT":
+        # elif strat == "PMT":
 
-        # else if strat == "GPM":
+        # elif strat == "GPM":
 
-        # else if strat == "GDM":
+        # elif strat == "GDM":
 
         else:
             print("strategy does not exist, please input a valid strategy")
@@ -580,3 +585,5 @@ def investCalc(ticker, baseSMA = 200, initial, income, investFrac, aigr, strat, 
 
 # disclaimer about how the current model doesn't use historical data on tax rates
 # disclaimer about how the current model doesn't use historical capital gains tax rates 
+
+investCalc("SPY", 100000, 100000, "MT", 200, 5)
