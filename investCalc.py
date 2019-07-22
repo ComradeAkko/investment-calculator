@@ -153,7 +153,7 @@ def cagr(bb, eb, initialDate, currentDate):
     n = currentDate.year - initialDate.year
 
     # return cagr
-    return (eb**(1/n))/bb - 1
+    return (eb/bb)**(1/n) - 1
 
 # returns the number of days between two dates
 def diffDays(d1, d2):
@@ -420,7 +420,10 @@ def MT(ticker, cash, income, baseSMA, commission):
                     gainsTax = capitalGains(slot.date, prices[i+1][0], income)
                     
                     # account for taxes
-                    stockEarnings *= 1-gainsTax
+                    print("current date is " + str(prices[i][0]))
+                    print("Taxes is " + str(gainsTax))
+                    print("Earnings is " + str(stockEarnings))
+                    stockEarnings = stockEarnings * (1-gainsTax)
                     data.taxes += stockEarnings*gainsTax
 
                     # account for comissions
@@ -526,6 +529,7 @@ def MT(ticker, cash, income, baseSMA, commission):
 
 # prints results from testing
 def printResults(data1, data2):
+
     print("From " + data1.iDate + " to " + data1.pDate + " the strategies " + data1.type + " and " + data2.type + " were compared:")
     print("with a starting value of $" + str(data1.initial) + "...")
     print(data1.type + " strategy had a final value of $" + str(data1.assets) + " with a profit/loss of $" + str(data1.pl))
