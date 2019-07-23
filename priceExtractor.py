@@ -97,7 +97,7 @@ def getStockData(ticker):
 
 	# set up the Firefox driver and set it so that it waits for elements to appear
 	driver = webdriver.Firefox(firefox_profile=profile)
-	driver.set_page_load_timeout(15)
+	driver.set_page_load_timeout(30)
 	driver.implicitly_wait(5)
 
 	# open the link

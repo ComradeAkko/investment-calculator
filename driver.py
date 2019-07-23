@@ -4,4 +4,6 @@
 
 from priceExtractor import getTreasuryData
 
-getTreasuryData()
+hey = eval("0.452")
+hey = 1.2- hey 
+print(hey)

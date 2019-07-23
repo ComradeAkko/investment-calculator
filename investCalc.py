@@ -20,6 +20,7 @@ class Data:
         self.comissions = 0
         self.pl = 0
         self.div = 0
+        self.treasury = 0
         self.iDate = 0
         self.pDate = 0
 
@@ -89,7 +90,7 @@ def getDivSplit(date,dataPath):
     # cycles through the row till it finds the relevant date
     for row in data:
         if row[0] == date:
-            divsplit = float(row[1])
+            divsplit = eval(row[1])
             file.close()
             return divsplit
 
@@ -414,24 +415,31 @@ def MT(ticker, cash, income, baseSMA, commission):
             if float(prices[i][4]) < sma:
                 # if stocks were bought and there is enough a data points to get a price to sell
                 if boughtStock and i+1 < len(prices):
+                    # calculate value of stocks sold
                     stockEarnings = float(prices[i+1][1]) * slot.quantity
 
-                    # calculate capital gains tax
-                    gainsTax = capitalGains(slot.date, prices[i+1][0], income)
-                    
-                    # account for taxes
-                    print("current date is " + str(prices[i][0]))
-                    print("Taxes is " + str(gainsTax))
-                    print("Earnings is " + str(stockEarnings))
-                    stockEarnings = stockEarnings * (1-gainsTax)
-                    data.taxes += stockEarnings*gainsTax
+                    # calculate profit/loss
+                    pl = (float(prices[i+1][1]) - slot.price) * slot.quantity
+
+                    # if there is a technical profit (not including commission)
+                    if pl > 0:
+                        # calculate capital gains tax
+                        gainsTax = capitalGains(slot.date, prices[i+1][0], income)
+
+                        # account for taxes
+                        paidTax = pl*gainsTax
+                        data.taxes += paidTax
+                        pl = pl*(1-gainsTax)
+
+                        # subtract taxes from stock earnings
+                        stockEarnings -= paidTax
 
                     # account for comissions
                     stockEarnings -= commission*2
                     data.comissions += commission*2
 
                     # account for the profit/loss
-                    data.pl += (float(prices[i+1][1]) - slot.price) * slot.quantity
+                    data.pl += pl
                     cash += stockEarnings
 
                     # reset the slot
@@ -453,6 +461,7 @@ def MT(ticker, cash, income, baseSMA, commission):
                     # if it has been 6 months since the last purchase/payment
                     if diffMonths(prices[i][0], nlot.date) % 6 == 0:
                         cash += nlot.amount * (nlot.rate/100/2)
+                        data.treasury += nlot.amount * (nlot.rate/100/2)
             
             # if the current closing price is greater than the sma
             else:
@@ -467,7 +476,7 @@ def MT(ticker, cash, income, baseSMA, commission):
                     nlot.rate = 0
 
                     # account for comissions
-                    stockEarnings -= commission*2
+                    cash -= commission*2
                     data.comissions += commission*2
 
                     # buy the stock at the current price
@@ -481,29 +490,29 @@ def MT(ticker, cash, income, baseSMA, commission):
                     # mark the boolean for keeping track of whether stocks or bonds have been bought
                     boughtStock = True
 
-                # if stocks were bought and the current closing price is greater than or equal to the sma
-                else:
-                    # if there is any data for splitting stocks
-                    if dataExists(splitPath):
-                        # if any of the dates appear in the stock split data
-                        if timeExists(prices[i][0],splitPath):
-                            # get the fraction of splitting
-                            fraction = getDivSplit(prices[i][0], splitPath)
-                            slot.quantity = math.floor(slot.quantity / fraction)
+        # if stocks were bought
+        if boughtStock:
+            # if there is any data for splitting stocks
+            if dataExists(splitPath):
+                # if any of the dates appear in the stock split data
+                if timeExists(prices[i][0],splitPath):
+                    # get the fraction of splitting
+                    fraction = getDivSplit(prices[i][0], splitPath)
+                    slot.quantity = math.floor(slot.quantity / fraction)
                     
-                    # if there is any data for dividends
-                    if dataExists(divPath):
-                        # if any of the dates appear in the dividend data
-                        if timeExists(prices[i][0], divPath):
-                            # get the dividend for the day and calculate the money gained
-                            d = getDivSplit(prices[i][0], divPath)
-                            cash += d * slot.quantity * (1 - divTax(fedTax(income)))
+            # if there is any data for dividends
+            if dataExists(divPath):
+                # if any of the dates appear in the dividend data
+                if timeExists(prices[i][0], divPath):
+                    # get the dividend for the day and calculate the money gained
+                    d = getDivSplit(prices[i][0], divPath)
+                    cash += d * slot.quantity * (1 - divTax(fedTax(income)))
 
-                            # record the dividends into data
-                            data.div += d * slot.quantity * (1 - divTax(fedTax(income)))
+                    # record the dividends into data
+                    data.div += d * slot.quantity * (1 - divTax(fedTax(income)))
 
-                            # record the taxes paid
-                            data.taxes += d * slot.quantity * divTax(fedTax(income))
+                    # record the taxes paid
+                    data.taxes += d * slot.quantity * divTax(fedTax(income))
 
     if boughtStock == True:
         # calculate profit/loss
@@ -534,12 +543,14 @@ def printResults(data1, data2):
     print("with a starting value of $" + str(data1.initial) + "...")
     print(data1.type + " strategy had a final value of $" + str(data1.assets) + " with a profit/loss of $" + str(data1.pl))
     print("A total of $" + str(data1.div) + " was paid in dividends.")
+    print("A total of $" + str(data1.treasury) + " was paid in treasury yields.")
     print("A total of $" + str(data1.taxes) + " was paid in taxes.")
     print("A total of $" + str(data1.comissions) + " was paid in comissions.")
     print(data1.type + " strategy had a compound annual growth rate of " + str(data1.cagr))
     print(" ")
     print(data2.type + " strategy had a final value of $" + str(data2.assets) + " with a profit/loss of $" + str(data2.pl))
     print("A total of $" + str(data2.div) + " was paid in dividends.")
+    print("A total of $" + str(data2.treasury) + " was paid in treasury yields.")
     print("A total of $" + str(data2.taxes) + " was paid in taxes.")
     print("A total of $" + str(data2.comissions) + " was paid in comissions.")
     print(data2.type + " strategy had a compound annual growth rate of " + str(data2.cagr))
@@ -595,4 +606,4 @@ def investCalc(ticker, initial, income, strat, baseSMA = 200, commission = 5):
 # disclaimer about how the current model doesn't use historical data on tax rates
 # disclaimer about how the current model doesn't use historical capital gains tax rates 
 
-investCalc("SPY", 100000, 100000, "MT", 200, 5)
+investCalc("EFA", 100000, 100000, "MT", 200, 2.5)
