@@ -92,27 +92,23 @@ def BH(ticker, cash, income, commission):
 
     # for every price, check to see if there was a stock split or a dividend issued
     for i in range(1, len(prices)):
-        # if there is any data for splitting stocks
-        if dataExists(splitPath):
-            # if any of the dates appear in the stock split data
-            if timeExists(prices[i][0],splitPath):
-                # get the fraction of splitting
-                fraction = getDivSplit(prices[i][0], splitPath)
-                slot.quantity = math.floor(slot.quantity / fraction)
+        # if any of the dates appear in the stock split data
+        if timeExists(prices[i][0],splitPath):
+            # get the fraction of splitting
+            fraction = getDivSplit(prices[i][0], splitPath)
+            slot.quantity = math.floor(slot.quantity / fraction)
         
-        # if there is any data for dividends
-        if dataExists(divPath):
-            # if any of the dates appear in the dividend data
-            if timeExists(prices[i][0], divPath):
-                # get the dividend for the day and calculate the money gained
-                d = getDivSplit(prices[i][0], divPath)
-                cash += d * slot.quantity * (1 - divTax(fedTax(income)))
+        # if any of the dates appear in the dividend data
+        if timeExists(prices[i][0], divPath):
+            # get the dividend for the day and calculate the money gained
+            d = getDivSplit(prices[i][0], divPath)
+            cash += d * slot.quantity * (1 - divTax(fedTax(income)))
 
-                # record the dividends into data
-                data.div += d * slot.quantity * (1 - divTax(fedTax(income)))
+            # record the dividends into data
+            data.div += d * slot.quantity * (1 - divTax(fedTax(income)))
 
-                # record the taxes paid
-                data.taxes += d * slot.quantity * divTax(fedTax(income))
+            # record the taxes paid
+            data.taxes += d * slot.quantity * divTax(fedTax(income))
     
     # calculate profit/loss
     data.pl = (float(prices[-1][4]) - slot.price) * slot.quantity
@@ -310,27 +306,23 @@ def MT(ticker, cash, income, baseSMA, commission):
 
         # if stocks were bought
         if boughtStock:
-            # if there is any data for splitting stocks
-            if dataExists(splitPath):
-                # if any of the dates appear in the stock split data
-                if timeExists(prices[i][0],splitPath):
-                    # get the fraction of splitting
-                    fraction = getDivSplit(prices[i][0], splitPath)
-                    slot.quantity = math.floor(slot.quantity / fraction)
+            # if any of the dates appear in the stock split data
+            if timeExists(prices[i][0],splitPath):
+                # get the fraction of splitting
+                fraction = getDivSplit(prices[i][0], splitPath)
+                slot.quantity = math.floor(slot.quantity / fraction)
                     
-            # if there is any data for dividends
-            if dataExists(divPath):
-                # if any of the dates appear in the dividend data
-                if timeExists(prices[i][0], divPath):
-                    # get the dividend for the day and calculate the money gained
-                    d = getDivSplit(prices[i][0], divPath)
-                    cash += d * slot.quantity * (1 - divTax(fedTax(income)))
+            # if any of the dates appear in the dividend data
+            if timeExists(prices[i][0], divPath):
+                # get the dividend for the day and calculate the money gained
+                d = getDivSplit(prices[i][0], divPath)
+                cash += d * slot.quantity * (1 - divTax(fedTax(income)))
 
-                    # record the dividends into data
-                    data.div += d * slot.quantity * (1 - divTax(fedTax(income)))
+                # record the dividends into data
+                data.div += d * slot.quantity * (1 - divTax(fedTax(income)))
 
-                    # record the taxes paid
-                    data.taxes += d * slot.quantity * divTax(fedTax(income))
+                # record the taxes paid
+                data.taxes += d * slot.quantity * divTax(fedTax(income))
 
     if boughtStock == True:
         # calculate profit/loss
@@ -533,27 +525,23 @@ def GX(ticker, cash, income, baseSMA, commission):
 
         # if stocks were bought
         if boughtStock:
-            # if there is any data for splitting stocks
-            if dataExists(splitPath):
-                # if any of the dates appear in the stock split data
-                if timeExists(prices[i][0],splitPath):
-                    # get the fraction of splitting
-                    fraction = getDivSplit(prices[i][0], splitPath)
-                    slot.quantity = math.floor(slot.quantity / fraction)
+            # if any of the dates appear in the stock split data
+            if timeExists(prices[i][0],splitPath):
+                # get the fraction of splitting
+                fraction = getDivSplit(prices[i][0], splitPath)
+                slot.quantity = math.floor(slot.quantity / fraction)
                     
-            # if there is any data for dividends
-            if dataExists(divPath):
-                # if any of the dates appear in the dividend data
-                if timeExists(prices[i][0], divPath):
-                    # get the dividend for the day and calculate the money gained
-                    d = getDivSplit(prices[i][0], divPath)
-                    cash += d * slot.quantity * (1 - divTax(fedTax(income)))
+            # if any of the dates appear in the dividend data
+            if timeExists(prices[i][0], divPath):
+                # get the dividend for the day and calculate the money gained
+                d = getDivSplit(prices[i][0], divPath)
+                cash += d * slot.quantity * (1 - divTax(fedTax(income)))
 
-                    # record the dividends into data
-                    data.div += d * slot.quantity * (1 - divTax(fedTax(income)))
+                # record the dividends into data
+                data.div += d * slot.quantity * (1 - divTax(fedTax(income)))
 
-                    # record the taxes paid
-                    data.taxes += d * slot.quantity * divTax(fedTax(income))
+                # record the taxes paid
+                data.taxes += d * slot.quantity * divTax(fedTax(income))
 
     if boughtStock == True:
         # calculate profit/loss
