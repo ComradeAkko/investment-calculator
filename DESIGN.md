@@ -14,6 +14,7 @@ class Data:
         self.comissions = 0
         self.pl = 0
         self.div = 0
+        self.treasury = 0
         self.initial = 0
         self.iDate = 0
         self.pDate = 0
