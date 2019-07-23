@@ -1,9 +1,66 @@
 # helperFunc.py by ComradeAkko
+# contains all the helper functions need for investCalc.py
+
 
 # returns a boolean based on whether the csv file contains data
 
 import csv, operator, math, os
 from datetime import datetime
+
+# searches for date via binary search
+def binaryDateSearch(array, left, right, date):
+    # Check base case 
+    if right >= left: 
+        mid = math.floor(left + (right - left)/2)
+
+        # get the mid date in datetime form
+        midDate = datetime.strptime(array[mid][0], "%Y-%m-%d")
+  
+        # If the specified date is present at the middle itself 
+        if midDate == date: 
+            return mid 
+          
+        # If the specified date is earlier than mid, then it  
+        # can only be present in left subarray 
+        elif midDate > date: 
+            return binaryDateSearch(array, left, mid-1, date) 
+  
+        # Else the date can only be present  
+        # in right subarray 
+        else: 
+            return binaryDateSearch(array, mid + 1, right, date) 
+  
+    else: 
+        # Date is not present in the array 
+        return -1
+
+# binary search especially for the treasury note yield search
+def binaryMonthSearch(array, left, right, date):
+    # Check base case 
+    if right >= left: 
+        mid = math.floor(left + (right - left)/2)
+
+        # get the mid date in datetime form
+        midDate = datetime.strptime(array[mid][0], "%Y-%m-%d")
+
+        # If the specific year and month is in the middle
+        if midDate.year == date.year and midDate.month == date.month: 
+            return mid 
+          
+        # If the specified date is earlier than mid, then it  
+        # can only be present in left subarray 
+        elif midDate > date: 
+            return binaryMonthSearch(array, left, mid-1, date) 
+  
+        # Else the date can only be present  
+        # in right subarray 
+        else: 
+            return binaryMonthSearch(array, mid + 1, right, date) 
+
+  
+    else: 
+        # Date is not present in the array 
+        return -1
 
 def dataExists(datePath, limit = 1):
     # opening the file
@@ -35,15 +92,26 @@ def timeExists(date, dataPath):
         # skipping the header
         next(data)
 
-        # for every row of data
-        for row in data:
-            # if the row contains the date return True
-            if row[0] == date:
-                file.close()
-                return True
-        
-        # if the for loop did not return True for its entire length,
-        # return False
+        # listify the data
+        data = list(data)
+
+        # convert the dates into datetime form
+        date = datetime.strptime(date, "%Y-%m-%d")
+
+        # search for the index of the date
+        idx = binaryDateSearch(data, 0, len(data)-1, date)
+
+        # close the file
+        file.close()
+
+        # return false idx is invalid
+        if idx == -1:
+            return False
+        # return true if the idx is valid
+        else:
+            return True
+    # if there aren't enough data points
+    else:
         file.close()
         return False
     
@@ -52,13 +120,25 @@ def timeExists(date, dataPath):
 def getDivSplit(date,dataPath):
     file = open(dataPath)
     data = csv.reader(file)
+    
+    # skip the header
+    next(data)
 
-    # cycles through the row till it finds the relevant date
-    for row in data:
-        if row[0] == date:
-            divsplit = eval(row[1])
-            file.close()
-            return divsplit
+    # listify the data
+    data = list(data)
+
+    # convert the dates into datetime form
+    date = datetime.strptime(date, "%Y-%m-%d")
+
+    # search for the index of the date
+    idx = binaryDateSearch(data, 0, len(data)-1, date)
+
+    divsplit = eval(data[idx][1])
+
+    # close the file
+    file.close()
+
+    return divsplit
 
 # returns the 10 year treasury note yield for stated month
 def getNoteYield(date, datapath):
@@ -71,17 +151,19 @@ def getNoteYield(date, datapath):
     # convert the current date into datetime format
     currDate = datetime.strptime(date, "%Y-%m-%d")
 
-    # cycles through the row till it finds the relevant date
-    for row in data:
-        # convert csv dates to datetime format
-        rowDate = datetime.strptime(row[0], "%Y-%m-%d")
+    # listify the data
+    data = list(data)
 
-        # if the year and month match, return the treasury yield rate
-        if rowDate.month == currDate.month and rowDate.year == currDate.year:
-            rate = float(row[1])
-            file.close()
-            return rate
-    
+    # search for the index of the date
+    idx = binaryMonthSearch(data, 0, len(data)-1, currDate)
+
+    # get the rate
+    rate = float(data[idx][1])
+
+    # close the file
+    file.close()
+
+    return rate 
 
 
 # returns the federal 2019 tax rate based on income
