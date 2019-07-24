@@ -247,12 +247,12 @@ def movingAverage(period, date, dataPath):
     # listify the data
     data = list(data)
 
-    # figure out which index holds the current date
-    for i in range(1, len(data)):
-        if date == data[i][0]:
-            index = i
-            break
+    # convert date to datetime form
+    date = datetime.strptime(date, "%Y-%m-%d")
 
+    # figure out which index holds the current date
+    index = binaryDateSearch(data, 0, len(data)-1, date)
+    
     # isolate the relevant rows
     movingAverageRows = data[index-period:index]
 
