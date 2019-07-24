@@ -40,7 +40,7 @@ class Nlot:
         self.date = 0
 
 # returns data for the Buy and Hold strat
-def BH(ticker, cash, income, commission):
+def BH(ticker, cash, income, baseSMA, commission):
     # initialize the data
     data = Data()
     data.type = "Buy and hold"
@@ -64,8 +64,8 @@ def BH(ticker, cash, income, commission):
     # skipping the header
     next(prices)
 
-    # skip the first 200 days
-    for i in range(200):
+    # skip the first baseSMA days
+    for i in range(int(baseSMA)):
         next(prices)
 
     # listify the csv file 
@@ -150,8 +150,8 @@ def MT(ticker, cash, income, baseSMA, commission):
     # skipping the header
     next(prices)
 
-    # skip the first 200 days
-    for i in range(baseSMA):
+    # skip the first baseSMA days
+    for i in range(int(baseSMA)):
         next(prices)
     
     # listify the csv.reader file
@@ -169,9 +169,12 @@ def MT(ticker, cash, income, baseSMA, commission):
     data.iDate = date
     
     # get the current month
-    currD = prices[i][0]
+    currD = prices[0][0]
     currD = datetime.strptime(currD, "%Y-%m-%d")
     month = currD.month
+
+    # set check boolean to true
+    checked = True
 
     # if the closing price of the previous day is greater than or equal to the sma
     if float(prices[0][4]) >= sma:
@@ -368,7 +371,7 @@ def GX(ticker, cash, income, baseSMA, commission):
     next(prices)
 
     # skip the first baseSMA days
-    for i in range(baseSMA):
+    for i in range(int(baseSMA)):
         next(prices)
     
     # listify the csv.reader file
@@ -387,9 +390,12 @@ def GX(ticker, cash, income, baseSMA, commission):
     data.iDate = date
     
     # get the current month
-    currD = prices[i][0]
+    currD = prices[0][0]
     currD = datetime.strptime(currD, "%Y-%m-%d")
     month = currD.month
+
+    # set check boolean to true
+    checked = True
 
     # if the lesser day moving average is greater than or equat to the greater day moving average
     if smaS >= smaG:
@@ -565,6 +571,807 @@ def GX(ticker, cash, income, baseSMA, commission):
 
     return data
 
+def DCA(ticker, cash, income, baseSMA, commission, aigr, investFrac):
+    # initialize the data
+    data = Data()
+    data.type = "Dollar Cost Averaging"
+
+    #set initial cash
+    data.initial = cash
+
+    #create the file paths
+    pricePath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_price.csv"
+    divPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_dividend.csv"
+    splitPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_split.csv"
+    notePath = os.getcwd() + "\\notes\\notes.csv"
+    
+    # get the csv file
+    priceF = open(pricePath)
+    prices = csv.reader(priceF)
+
+    # skipping the header
+    next(prices)
+
+    # skip the first baseSMA days
+    for i in range(int(baseSMA)):
+        next(prices)
+    
+    # listify the csv.reader file
+    prices = list(prices)
+
+    # initialize the stock lot list
+    slotList = []
+
+    # get the current date and record it in the data
+    date = prices[0][0]
+    data.iDate = date
+    
+    # get the current month and year
+    currD = prices[0][0]
+    currD = datetime.strptime(currD, "%Y-%m-%d")
+    year = currD.year
+    month = currD.month
+
+    # buy the intial lot of stocks
+    # account for comissions
+    cash -= commission
+    data.comissions += commission
+
+    # initialize the stock and lot
+    slot = Slot()
+
+    # buy the stock at the current price
+    slot.price = float(prices[1][1])
+    slot.quantity = math.floor(cash/slot.price)
+    slot.date = prices[1][0]
+    
+    # subtract the amount used
+    cash -= slot.price * slot.quantity
+
+    # append the stock lot into the list
+    slotList.append(slot)
+
+    # set spending limits for this year
+    budget = income*investFrac/12
+
+    # set checked boolean to true
+    checked = True
+
+    # for every remaining price data
+    for i in range(1, len(prices)):
+        # get the current date
+        currentDate = prices[i][0]
+        currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
+
+        # check if the current year is a different year compared to the last date
+        if year != currentDate.year:
+            year = currentDate.year
+
+            # update the current income
+            income *= 1+aigr
+
+            # set spending limits for this year
+            budget = (income*investFrac)/12
+
+        # check if the current month is a different month compared to the last date
+        if month != currentDate.month:
+            month = currentDate.month
+            checked = False
+
+            # add the monthly budget of this year to cash
+            cash += budget
+
+        # if the current date is after the tenth and stocks have not been checked
+        # for this current month yet
+        if currentDate.day >= 10 and checked == False:
+            # set checked boolean to true
+            checked = True
+
+            # check the stock's current price
+            currPrice = float(prices[i+1][1])
+            currQuantity = math.floor((cash-commission)/currPrice)
+
+            # if there is enough money to buy at least one stock,
+            # buy as many stock as possible
+            if currQuantity > 0:
+                slotNew = Slot()
+                slotNew.price = currPrice
+                slotNew.quantity = currQuantity
+                slotNew.date = prices[i+1][0]
+
+                # subtract the amount used
+                cash -= slotNew.price * slotNew.quantity
+
+                # account for comissions
+                cash -= commission
+                data.comissions += commission
+
+                # add the current stockLot to the list of stock lot
+                slotList.append(slotNew)
+
+        # if any of the dates appear in the stock split data
+        if timeExists(prices[i][0],splitPath):
+            # get the fraction of splitting
+            fraction = getDivSplit(prices[i][0], splitPath)
+
+            # apply the split to all stock lots
+            for lot in slotList:
+                lot.quantity = math.floor(lot.quantity / fraction)
+                    
+        # if any of the dates appear in the dividend data
+        if timeExists(prices[i][0], divPath):
+            # get the dividend for the day and calculate the money gained
+            d = getDivSplit(prices[i][0], divPath)
+            
+            # apply the dividend to all stock lots
+            for lot in slotList:
+                cash += d * lot.quantity * (1 - divTax(fedTax(income)))
+                # record the dividends into data
+                data.div += d * lot.quantity * (1 - divTax(fedTax(income)))
+
+                # record the taxes paid
+                data.taxes += d * lot.quantity * divTax(fedTax(income))
+    
+    # while there are slots to get from the stock list
+    while slotList:
+        # get a slot
+        slot = slotList.pop()
+
+        # add the profit/loss and total assets to the data
+        data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
+        data.assets += float(prices[-1][4]) * slot.quantity
+        
+    # add the remaining cash to total assets
+    data.assets += cash
+    
+    # calculate cagr
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    
+    # record the last date
+    data.pDate = prices[-1][0]
+
+    # close file
+    priceF.close()
+
+    return data
+
+
+def PMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
+    # initialize the data
+    data = Data()
+    data.type = "Parallel Momentum trading"
+
+    #set initial cash
+    data.initial = cash
+
+    #create the file paths
+    pricePath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_price.csv"
+    divPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_dividend.csv"
+    splitPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_split.csv"
+    notePath = os.getcwd() + "\\notes\\notes.csv"
+    
+    # get the csv file
+    priceF = open(pricePath)
+    prices = csv.reader(priceF)
+
+    # skipping the header
+    next(prices)
+
+    # skip the first baseSMA days
+    for i in range(int(baseSMA)):
+        next(prices)
+    
+    # listify the csv.reader file
+    prices = list(prices)
+
+    # calculate the current moving average
+    sma = movingAverage(baseSMA, prices[0][0], pricePath)
+    
+    # initialize the stock and treasury note lot list
+    slotList = []
+    nlotList = []
+
+    # get the current date and record it in the data
+    date = prices[0][0]
+    data.iDate = date
+    
+    # get the current month and year
+    currD = prices[i][0]
+    currD = datetime.strptime(currD, "%Y-%m-%d")
+    year = currD.year
+    month = currD.month
+
+    # set check boolean to true
+    checked = True
+
+    # set spending limits for this year
+    budget = income*investFrac/12
+
+    # if the closing price of the previous day is greater than or equal to the sma
+    if float(prices[0][4]) >= sma:
+        # initialize the stock lot
+        slot = Slot()
+
+        # buy the stock at the current price
+        slot.price = float(prices[1][1])
+        slot.quantity = math.floor(cash/slot.price)
+        slot.date = prices[1][0]
+    
+        # subtract the amount used
+        cash -= slot.price * slot.quantity
+
+        # append the stock lot into the list
+        slotList.append(slot)
+
+        # mark the boolean for keeping track of whether stocks or bonds have been bought
+        boughtStock = True
+    
+    # if the current opening price is less than the sma
+    else:
+        # account for comissions
+        cash -= commission
+        data.comissions += commission
+
+        # initialize the treasury note lot
+        nlot = Nlot()
+
+        # buy treasury notes
+        nlot.rate = getNoteYield(prices[1][0], notePath)
+        nlot.amount = cash
+        nlot.date = prices[1][0]
+
+        # subtract the amount put into treasury notes from cash
+        cash -= nlot.amount 
+
+        # append treasury note lot to treasury note list
+        nlotList.append(nlot)
+
+        # set boolean 
+        boughtStock = False
+
+    # for every remaining price data
+    for i in range(1, len(prices)):
+        # get the current date
+        currentDate = prices[i][0]
+        currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
+
+        # check if the current year is a different year compared to the last date
+        if year != currentDate.year:
+            year = currentDate.year
+
+            # update the current income
+            income *= 1+aigr
+
+            # set spending limits for this year
+            budget = income*investFrac/12
+
+        # check if the current month is a different month compared to the last date
+        if month != currentDate.month:
+            month = currentDate.month
+            checked = False
+
+            # add the monthly budget of this year to cash
+            cash += budget
+
+        # if the current date is after the tenth and stocks have not been checked
+        # for this current month yet
+        if currentDate.day >= 10 and checked == False:
+            # set checked boolean to true
+            checked = True
+
+            # calculate the current moving average
+            sma = movingAverage(baseSMA, prices[i][0], pricePath)
+
+            # if the current closing price is less than the sma
+            if float(prices[i][4]) < sma:
+                # if stocks were bought and there is enough a data points to get a price to sell
+                if boughtStock and i+1 < len(prices):
+                    while slotList:
+                        slot = slotList.pop()
+                        # calculate value of stocks sold
+                        stockEarnings = float(prices[i+1][1]) * slot.quantity
+
+                        # calculate profit/loss
+                        pl = (float(prices[i+1][1]) - slot.price) * slot.quantity
+
+                        # if there is a technical profit (not including commission)
+                        if pl > 0:
+                            # calculate capital gains tax
+                            gainsTax = capitalGains(slot.date, prices[i+1][0], income)
+
+                            # account for taxes
+                            paidTax = pl*gainsTax
+                            data.taxes += paidTax
+                            pl = pl*(1-gainsTax)
+
+                            # subtract taxes from stock earnings
+                            stockEarnings -= paidTax
+
+                        # account for the profit/loss
+                        data.pl += pl
+                        cash += stockEarnings
+                    
+                    # account for commissions
+                    cash -= commission*2
+                    data.comissions += commission*2
+
+                    # initialize the treasury note lot
+                    nlot = Nlot()
+
+                    # convert the cash to treasury note
+                    nlot.amount = cash
+                    cash -= nlot.amount
+                    nlot.rate = getNoteYield(prices[i+1][0], notePath)
+                    nlot.date = prices[i+1][0]
+
+                    # add the treasury note to note list
+                    nlotList.append(nlot)
+
+                    # mark the boolean for keeping track of whether stocks or bonds have been bought
+                    boughtStock = False
+
+                # if stocks were not bought and the current closing price is less than the sma
+                else:
+                    # for every treasury lot currently owned
+                    for lot in nlotList:
+                        # if it has been 6 months since the last purchase/payment
+                        if diffMonths(prices[i][0], lot.date) % 6 == 0:
+                            cash += lot.amount * (lot.rate/100/2)
+                            data.treasury += lot.amount * (lot.rate/100/2)
+                    
+                    # account for commissions
+                    cash -= commission
+                    data.comissions += commission
+                    
+                    # convert the current cash to treasury bonds
+                    nlot = Nlot()
+                    nlot.amount = cash
+                    cash -= nlot.amount
+                    nlot.rate = getNoteYield(prices[i+1][0], notePath)
+                    nlot.date = prices[i+1][0]
+
+                    # add the treasury note to note list
+                    nlotList.append(nlot)
+            
+                    
+            # if the current closing price is greater than the sma
+            else:
+                # and if stocks were not bought and there are enough data points to gather data from
+                if boughtStock == False and i+1 < len(prices):
+                    # for every treasury note currently owned
+                    while nlotList:
+                        nlot = nlotList.pop()
+
+                        # convert treasury notes into cash
+                        cash += nlot.amount
+
+                        # account for commissions
+                        cash -= commission
+                        data.comissions += commission
+
+                    # account for comissions
+                    cash -= commission
+                    data.comissions += commission
+
+                    # initialize another stock lot
+                    slot = Slot()
+
+                    # buy the stock at the current price
+                    slot.price = float(prices[i+1][1])
+                    slot.quantity = math.floor(cash/slot.price)
+                    slot.date = prices[i+1][0]
+
+                    # subtract the amount used
+                    cash -= slot.price * slot.quantity
+
+                    # add the stock lot to the stock lot list
+                    slotList.append(slot)
+
+                    # mark the boolean for keeping track of whether stocks or bonds have been bought
+                    boughtStock = True
+
+                # and if stocks are already bought, buy more with the remaining cash
+                elif i+1 < len(prices):
+                    # check the stock's current price
+                    currPrice = float(prices[i+1][1])
+                    currQuantity = math.floor((cash-commission)/currPrice)
+
+                    # if there is enough money to buy at least one stock,
+                    # buy as many stock as possible
+                    if currQuantity > 0:
+                        slotNew = Slot()
+                        slotNew.price = currPrice
+                        slotNew.quantity = currQuantity
+                        slotNew.date = prices[i+1][0]
+
+                        # subtract the amount used
+                        cash -= slotNew.price * slotNew.quantity
+
+                        # account for comissions
+                        cash -= commission
+                        data.comissions += commission
+
+                        # add the current stockLot to the list of stock lot
+                        slotList.append(slotNew)
+
+        # if stocks were bought
+        if boughtStock:
+            # if any of the dates appear in the stock split data
+            if timeExists(prices[i][0],splitPath):
+                # get the fraction of splitting
+                fraction = getDivSplit(prices[i][0], splitPath)
+
+                # apply the split to all stock lots
+                for lot in slotList:
+                    lot.quantity = math.floor(lot.quantity / fraction)
+                        
+            # if any of the dates appear in the dividend data
+            if timeExists(prices[i][0], divPath):
+                # get the dividend for the day and calculate the money gained
+                d = getDivSplit(prices[i][0], divPath)
+                
+                # apply the dividend to all stock lots
+                for lot in slotList:
+                    cash += d * lot.quantity * (1 - divTax(fedTax(income)))
+                    # record the dividends into data
+                    data.div += d * lot.quantity * (1 - divTax(fedTax(income)))
+
+                    # record the taxes paid
+                    data.taxes += d * lot.quantity * divTax(fedTax(income))
+    
+    if boughtStock:
+        # while there are slots to get from the stock list
+        while slotList:
+            # get a slot
+            slot = slotList.pop()
+
+            # add the profit/loss and total assets to the data
+            data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
+            data.assets += float(prices[-1][4]) * slot.quantity
+        
+        # add the remaining cash to total assets
+        data.assets += cash
+        
+    else:
+        # while there are slots to get from the treasury list
+        while nlotList:
+            # get a slot
+            nlot = slotList.pop()
+
+            data.assets += nlot.amount
+        # add the remaining cash to total assets
+        data.assets += cash
+
+    # calculate cagr
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    
+    # record the last date
+    data.pDate = prices[-1][0]
+
+    # close file
+    priceF.close()
+
+    return data
+
+def DMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
+    # initialize the data
+    data = Data()
+    data.type = "Divergent Momentum trading"
+
+    #set initial cash
+    data.initial = cash
+
+    #create the file paths
+    pricePath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_price.csv"
+    divPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_dividend.csv"
+    splitPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker + "_split.csv"
+    notePath = os.getcwd() + "\\notes\\notes.csv"
+    
+    # get the csv file
+    priceF = open(pricePath)
+    prices = csv.reader(priceF)
+
+    # skipping the header
+    next(prices)
+
+    # skip the first baseSMA days
+    for i in range(int(baseSMA)):
+        next(prices)
+    
+    # listify the csv.reader file
+    prices = list(prices)
+
+    # calculate the current moving average
+    sma = movingAverage(baseSMA, prices[0][0], pricePath)
+    
+    # initialize the stock and treasury note lot list
+    slotList = []
+    nlotList = []
+
+    # get the current date and record it in the data
+    date = prices[0][0]
+    data.iDate = date
+    
+    # get the current month and year
+    currD = prices[i][0]
+    currD = datetime.strptime(currD, "%Y-%m-%d")
+    year = currD.year
+    month = currD.month
+
+    # set check boolean to true
+    checked = True
+
+    # set spending limits for this year
+    budget = income*investFrac/12
+
+    # if the closing price of the previous day is greater than or equal to the sma
+    if float(prices[0][4]) >= sma:
+        # initialize the stock lot
+        slot = Slot()
+
+        # buy the stock at the current price
+        slot.price = float(prices[1][1])
+        slot.quantity = math.floor(cash/slot.price)
+        slot.date = prices[1][0]
+    
+        # subtract the amount used
+        cash -= slot.price * slot.quantity
+
+        # append the stock lot into the list
+        slotList.append(slot)
+
+        # mark the boolean for keeping track of whether stocks or bonds have been bought
+        boughtStock = True
+    
+    # if the current opening price is less than the sma
+    else:
+        # account for comissions
+        cash -= commission
+        data.comissions += commission
+
+        # initialize the treasury note lot
+        nlot = Nlot()
+
+        # buy treasury notes
+        nlot.rate = getNoteYield(prices[1][0], notePath)
+        nlot.amount = cash
+        nlot.date = prices[1][0]
+
+        # subtract the amount put into treasury notes from cash
+        cash -= nlot.amount 
+
+        # append treasury note lot to treasury note list
+        nlotList.append(nlot)
+
+        # set boolean 
+        boughtStock = False
+
+    # for every remaining price data
+    for i in range(1, len(prices)):
+        # get the current date
+        currentDate = prices[i][0]
+        currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
+
+        # check if the current year is a different year compared to the last date
+        if year != currentDate.year:
+            year = currentDate.year
+
+            # update the current income
+            income *= 1+aigr
+
+            # set spending limits for this year
+            budget = income*investFrac/12
+
+        # check if the current month is a different month compared to the last date
+        if month != currentDate.month:
+            month = currentDate.month
+            checked = False
+
+            # add the monthly budget of this year to cash
+            cash += budget
+
+        # if the current date is after the tenth and stocks have not been checked
+        # for this current month yet
+        if currentDate.day >= 10 and checked == False:
+            # set checked boolean to true
+            checked = True
+
+            # calculate the current moving average
+            sma = movingAverage(baseSMA, prices[i][0], pricePath)
+
+            # if the current closing price is less than the sma
+            if float(prices[i][4]) < sma:
+                # if stocks were bought and there is enough a data points to get a price to sell
+                if boughtStock and i+1 < len(prices):
+                    while slotList:
+                        slot = slotList.pop()
+                        # calculate value of stocks sold
+                        stockEarnings = float(prices[i+1][1]) * slot.quantity
+
+                        # calculate profit/loss
+                        pl = (float(prices[i+1][1]) - slot.price) * slot.quantity
+
+                        # if there is a technical profit (not including commission)
+                        if pl > 0:
+                            # calculate capital gains tax
+                            gainsTax = capitalGains(slot.date, prices[i+1][0], income)
+
+                            # account for taxes
+                            paidTax = pl*gainsTax
+                            data.taxes += paidTax
+                            pl = pl*(1-gainsTax)
+
+                            # subtract taxes from stock earnings
+                            stockEarnings -= paidTax
+
+                        # account for the profit/loss
+                        data.pl += pl
+                        cash += stockEarnings
+                    
+                    # account for commissions
+                    cash -= commission*2
+                    data.comissions += commission*2
+
+                    # initialize the treasury note lot
+                    nlot = Nlot()
+
+                    # convert the cash to treasury note
+                    nlot.amount = cash
+                    cash -= nlot.amount
+                    nlot.rate = getNoteYield(prices[i+1][0], notePath)
+                    nlot.date = prices[i+1][0]
+
+                    # add the treasury note to note list
+                    nlotList.append(nlot)
+
+                    # mark the boolean for keeping track of whether stocks or bonds have been bought
+                    boughtStock = False
+
+                # if stocks were not bought and the current closing price is less than the sma
+                else:
+                    # for every treasury lot currently owned
+                    for lot in nlotList:
+                        # if it has been 6 months since the last purchase/payment
+                        if diffMonths(prices[i][0], lot.date) % 6 == 0:
+                            cash += lot.amount * (lot.rate/100/2)
+                            data.treasury += lot.amount * (lot.rate/100/2)
+                    
+                    # if there are enough data points left
+                    if i+1 < len(prices):
+                        # check the stock's current price
+                        currPrice = float(prices[i+1][1])
+                        currQuantity = math.floor((cash-commission)/currPrice)
+
+                        # if there is enough money to buy at least one stock,
+                        # buy as many stock as possible
+                        if currQuantity > 0:
+                            slotNew = Slot()
+                            slotNew.price = currPrice
+                            slotNew.quantity = currQuantity
+                            slotNew.date = prices[i+1][0]
+
+                            # subtract the amount used
+                            cash -= slotNew.price * slotNew.quantity
+
+                            # account for comissions
+                            cash -= commission
+                            data.comissions += commission
+
+                            # add the current stockLot to the list of stock lot
+                            slotList.append(slotNew)
+            
+                    
+            # if the current closing price is greater than the sma
+            else:
+                # and if stocks were not bought and there are enough data points to gather data from
+                if boughtStock == False and i+1 < len(prices):
+                    # for every treasury note currently owned
+                    while nlotList:
+                        nlot = nlotList.pop()
+
+                        # convert treasury notes into cash
+                        cash += nlot.amount
+
+                        # account for commissions
+                        cash -= commission
+                        data.comissions += commission
+
+                    # account for comissions
+                    cash -= commission
+                    data.comissions += commission
+
+                    # initialize another stock lot
+                    slot = Slot()
+
+                    # buy the stock at the current price
+                    slot.price = float(prices[i+1][1])
+                    slot.quantity = math.floor(cash/slot.price)
+                    slot.date = prices[i+1][0]
+
+                    # subtract the amount used
+                    cash -= slot.price * slot.quantity
+
+                    # add the stock lot to the stock lot list
+                    slotList.append(slot)
+
+                    # mark the boolean for keeping track of whether stocks or bonds have been bought
+                    boughtStock = True
+                # and if stocks are already bought, buy more with the remaining cash
+                elif i+1 < len(prices):
+                    # check the stock's current price
+                    currPrice = float(prices[i+1][1])
+                    currQuantity = math.floor((cash-commission)/currPrice)
+
+                    # if there is enough money to buy at least one stock,
+                    # buy as many stock as possible
+                    if currQuantity > 0:
+                        slotNew = Slot()
+                        slotNew.price = currPrice
+                        slotNew.quantity = currQuantity
+                        slotNew.date = prices[i+1][0]
+
+                        # subtract the amount used
+                        cash -= slotNew.price * slotNew.quantity
+
+                        # account for comissions
+                        cash -= commission
+                        data.comissions += commission
+
+                        # add the current stockLot to the list of stock lot
+                        slotList.append(slotNew)
+
+        # if any of the dates appear in the stock split data
+        if timeExists(prices[i][0],splitPath):
+            # get the fraction of splitting
+            fraction = getDivSplit(prices[i][0], splitPath)
+
+            # apply the split to all stock lots
+            for lot in slotList:
+                lot.quantity = math.floor(lot.quantity / fraction)
+                        
+        # if any of the dates appear in the dividend data
+        if timeExists(prices[i][0], divPath):
+            # get the dividend for the day and calculate the money gained
+            d = getDivSplit(prices[i][0], divPath)
+                
+            # apply the dividend to all stock lots
+            for lot in slotList:
+                cash += d * lot.quantity * (1 - divTax(fedTax(income)))
+                # record the dividends into data
+                data.div += d * lot.quantity * (1 - divTax(fedTax(income)))
+
+                # record the taxes paid
+                data.taxes += d * lot.quantity * divTax(fedTax(income))
+    
+    # while there are slots to get from the stock list
+    while slotList:
+        # get a slot
+        slot = slotList.pop()
+
+        # add the profit/loss and total assets to the data
+        data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
+        data.assets += float(prices[-1][4]) * slot.quantity   
+
+    # while there are slots to get from the treasury list
+    while nlotList:
+        # get a slot
+        nlot = slotList.pop()
+
+        data.assets += nlot.amount
+    # add the remaining cash to total assets
+    data.assets += cash
+
+    # calculate cagr
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    
+    # record the last date
+    data.pDate = prices[-1][0]
+
+    # close file
+    priceF.close()
+
+    return data
+
 # prints results from testing
 def printResults(ticker, data1, data2):
     print("The following results are based on the ticker: " + ticker)
@@ -584,9 +1391,30 @@ def printResults(ticker, data1, data2):
     print("A total of $" + str(data2.comissions) + " was paid in comissions.")
     print(data2.type + " strategy had a compound annual growth rate of " + str(data2.cagr))
 
+# InvestCalc():
+# calculates how certain strategies do within a historical context
+# ticker:       ticker of the stock being evaluated
+#
+# initial:      the initial amount of capital to be used
+#
+# income:       the annual income of the person
+#
+# baseSMA:      Base Simple Moving Average. Moving average base to be used in strategies.
+#                   Set to 200 in default.
+#                   In golden cross strategies where two SMA's are used, the lesser SMA
+#                   will be the floor of baseSMA/4, so in default the lesser SMA is 50.
+#
+# investFrac:   Investment fraction. ONLY USED IN ACTIVE STRATEGIES. 
+#                   Specifies what fraction of untaxed income will be used for investment purposes annually.
+#                   Set to zero in default.
+#                   Decimal should be inputted. (i.e. .8 for 80% or .15 for 15%)
+#
+# aigr:         Annual Income Growth Rate. ONLY USED IN ACTIVE STRATEGIES. 
+#                   Specifies the annual growth rate of income.
+#                   Set to zero in default.
+#                   Decimal should be inputted. (i.e. .02 for 2%, .015 for 1.5%)
 
-
-def investCalc(ticker, initial, income, strat, baseSMA = 200, commission = 5):
+def investCalc(ticker, initial, income, strat, baseSMA = 200, commission = 5, investFrac = 0, aigr = 0):
     stockPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker
     notesPath = os.getcwd() + "\\notes\\notes.csv"
 
@@ -603,17 +1431,23 @@ def investCalc(ticker, initial, income, strat, baseSMA = 200, commission = 5):
     if dataExists(stockPricePath, baseSMA):
         if strat == "MT":
             MTdata = MT(ticker, initial, income, baseSMA, commission)
-            BHdata = BH(ticker, initial, income, commission)
+            BHdata = BH(ticker, initial, income, baseSMA, commission)
             printResults(ticker, BHdata, MTdata)
         
         elif strat == "GX":
             GXdata = GX(ticker, initial, income, baseSMA, commission)
-            BHdata = BH(ticker, initial, income, commission)
+            BHdata = BH(ticker, initial, income, baseSMA, commission)
             printResults(ticker, BHdata, GXdata)
         
-        # elif strat == "DMT":
-        
-        # elif strat == "PMT":
+        elif strat == "PMT":
+            DCAdata = DCA(ticker, initial, income, baseSMA, commission, aigr, investFrac)
+            PMTdata = PMT(ticker, initial, income, baseSMA, commission, aigr, investFrac)
+            printResults(ticker, DCAdata, PMTdata)
+
+        elif strat == "DMT":
+            DCAdata = DCA(ticker, initial, income, baseSMA, commission, aigr, investFrac)
+            DMTdata = DMT(ticker, initial, income, baseSMA, commission, aigr, investFrac)
+            printResults(ticker, DCAdata, DMTdata)
 
         # elif strat == "GPM":
 
@@ -634,6 +1468,8 @@ def investCalc(ticker, initial, income, strat, baseSMA = 200, commission = 5):
 # calculate buying and selling
 
 # disclaimer about how the current model doesn't use historical data on tax rates
-# disclaimer about how the current model doesn't use historical capital gains tax rates 
+# disclaimer about how the current model doesn't use historical capital gains tax rates
+# disclaimer about how the current model doesn't possibly use accurate bonds information and handling
+# disclaimer about how bond income is not taxed
 
-investCalc("EFA", 100000, 100000, "MT", 200, 2.5)
+investCalc("EEM", 100000, 100000, "DMT", 200, 5, .5, .02)
