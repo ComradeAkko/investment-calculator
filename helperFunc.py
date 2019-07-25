@@ -329,7 +329,6 @@ def getStartDate(dataPath, startDate, baseSMA):
 
     # convert the start date into datetime format
     if startDate != "MAX":
-        print(startDate)
         startDate = datetime.strptime(startDate, "%m/%d/%Y")
 
     # if the start date is labelled max
@@ -340,14 +339,11 @@ def getStartDate(dataPath, startDate, baseSMA):
     # if the start date is not labelled max
     else:
         # find the closest date
-        print(startDate)
         idx = binaryClosestDateSearch(data, 1, len(data)-1, startDate)
 
-        print(idx)
         # if the date is less than the baseSMA, the earliest date is set to the baseSMA-th day
         if idx < baseSMA:
             idx = baseSMA
-        print(idx)
 
         startDate = datetime.strptime(data[idx][0], "%Y-%m-%d")
     
