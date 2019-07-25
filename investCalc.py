@@ -2074,6 +2074,10 @@ def printResults(ticker, data1, data2):
 #
 # income:       the annual income of the person
 #
+# strat1:       the first strategy to be compared
+#
+# strat2:       the second strategy to be compared
+#
 # baseSMA:      Base Simple Moving Average. Moving average base to be used in strategies.
 #                   Set to 200 in default.
 #                   In golden cross strategies where two SMA's are used, the lesser SMA
@@ -2089,7 +2093,7 @@ def printResults(ticker, data1, data2):
 #                   Set to zero in default.
 #                   Decimal should be inputted. (i.e. .02 for 2%, .015 for 1.5%)
 
-def investCalc(ticker, startDate, endDate, initial, income, strat, baseSMA = 200, commission = 5, investFrac = 0, aigr = 0):
+def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, baseSMA = 200, commission = 5, investFrac = 0, aigr = 0):
     stockPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker
     notesPath = os.getcwd() + "\\notes\\notes.csv"
 
@@ -2108,41 +2112,99 @@ def investCalc(ticker, startDate, endDate, initial, income, strat, baseSMA = 200
         startDate = getStartDate(stockPricePath, startDate, baseSMA)
         endDate = getEndDate(stockPricePath, endDate, baseSMA)
 
-        # compare the strategies
-        if strat == "MT":
-            MTdata = MT(ticker, startDate, endDate, initial, income, baseSMA, commission)
-            BHdata = BH(ticker, startDate, endDate, initial, income, baseSMA, commission)
-            printResults(ticker, BHdata, MTdata)
-        
-        elif strat == "GX":
-            GXdata = GX(ticker, startDate, endDate, initial, income, baseSMA, commission)
-            BHdata = BH(ticker, startDate, endDate, initial, income, baseSMA, commission)
-            printResults(ticker, BHdata, GXdata)
-        
-        elif strat == "PMT":
-            DCAdata = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-            PMTdata = PMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-            printResults(ticker, DCAdata, PMTdata)
+        # if the startDate is properly earlier than the endDate
+        if startDate < endDate:
+            # booleans to determine if a strat has been found
+            found1 = False
+            found2 = False
 
-        elif strat == "DMT":
-            DCAdata = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-            DMTdata = DMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-            printResults(ticker, DCAdata, DMTdata)
+            # compare the strategies
+            if strat1 == "BH" or strat2 == "BH":
+                if strat1 == "BH":
+                    data1 = BH(ticker, startDate, endDate, initial, income, baseSMA, commission)
+                    Found1 = True
 
-        elif strat == "GPM":
-            DCAdata = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-            GPMdata = GPM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-            printResults(ticker, DCAdata, GPMdata)
+                if strat2 == "BH":
+                    data2 = BH(ticker, startDate, endDate, initial, income, baseSMA, commission)
+                    Found2 = True
+
+            if strat1 == "MT" or strat2 == "MT":
+                if strat1 == "MT":
+                    data1 = MT(ticker, startDate, endDate, initial, income, baseSMA, commission)
+                    Found1 = True
+
+                if strat2 == "MT":
+                    data2 = MT(ticker, startDate, endDate, initial, income, baseSMA, commission)
+                    Found2 = True
+
             
-        elif strat == "GDM":
-            DCAdata = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-            GDMdata = GDM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-            printResults(ticker, DCAdata, GDMdata)
-        
+            if strat1 == "GX" or strat2 == "GX":
+                if strat1 == "GX":
+                    data1 = GX(ticker, startDate, endDate, initial, income, baseSMA, commission)
+                    Found1 = True
 
+                if strat2 == "GX":
+                    data2 = GX(ticker, startDate, endDate, initial, income, baseSMA, commission)
+                    Found2 = True
+            
+            if strat1 == "DCA" or strat2 == "DCA":
+                if strat1 == "DCA":
+                    data1 = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    Found1 = True
+
+                if strat2 == "DCA":
+                    data2 = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    Found2 = True
+            
+            if strat1 == "PMT" or strat2 == "PMT":
+                if strat1 == "PMT":
+                    data1 = PMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    Found1 = True
+
+                if strat2 == "PMT":
+                    data2 = PMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    Found2 = True
+
+            if strat1 == "DMT" or strat2 == "DMT":
+                if strat1 == "DMT":
+                    data1 = DMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    Found1 = True
+
+                if strat2 == "DMT":
+                    data2 = DMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    Found2 = True
+
+            if strat1 == "GPM" or strat2 == "GPM":
+                if strat1 == "GPM":
+                    data1 = GPM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    Found1 = True
+
+                if strat2 == "GPM":
+                    data2 = GPM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    Found2 = True
+                
+            if strat1 == "GDM" or strat2 == "GDM":
+                if strat1 == "GDM":
+                    data1 = GDM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    Found1 = True
+
+                if strat2 == "GDM":
+                    data2 = GDM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    Found2 = True
+
+            # print the results
+            if Found1 and Found2:
+                printResults(ticker, data1, data2)
+
+            else:
+                if Found1 == False and Found2 == False:
+                    print("Both strategies do not exist, please input valid strategies")
+                elif Found1 == False:
+                    print("The first strategy does not exist, please input valid strategies")
+                else:
+                    print("The second strategy does not exist, please input valid strategies")
         else:
-            print("strategy does not exist, please input a valid strategy")
-
+            print("Please make sure the start date is earlier than the end date")
 
     else:
         print("Stock data does not have enough data points for this baseSMA")
@@ -2159,4 +2221,4 @@ def investCalc(ticker, startDate, endDate, initial, income, strat, baseSMA = 200
 # disclaimer about how the current model doesn't possibly use accurate bonds information and handling
 # disclaimer about how bond income is not taxed
 
-investCalc("SPY", "1/20/2001", "MAX", 100000, 100000, "GDM", 200, 5, .5, .02)
+investCalc("SPY", "1/20/2001", "1/1/2019", 100000, 100000, "DMT", "PMT", 200, 5, .5, .02)
