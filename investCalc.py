@@ -40,7 +40,7 @@ class Nlot:
         self.date = 0
 
 # returns data for the Buy and Hold strat
-def BH(ticker, cash, income, baseSMA, commission):
+def BH(ticker, startDate, endDate, cash, income, baseSMA, commission):
     # initialize the data
     data = Data()
     data.type = "Buy and hold"
@@ -64,18 +64,20 @@ def BH(ticker, cash, income, baseSMA, commission):
     # skipping the header
     next(prices)
 
-    # skip the first baseSMA days
-    for i in range(int(baseSMA)):
-        next(prices)
-
     # listify the csv file 
     prices = list(prices)
+
+    # get the index of the starting date:
+    startIDX = binaryDateSearch(prices, 0, len(prices)-1, startDate)
+
+    # get the index of the ending date:
+    endIDX = binaryDateSearch(prices, 0, len(prices)-1, endDate)
     
-    # get the opening price for the 201st day
-    price = float(prices[0][1])
+    # get the opening price for the baseSMA+1st day
+    price = float(prices[startIDX][1])
     
     # get the current date and record it in the data
-    date = prices[0][0]
+    date = prices[startIDX][0]
     data.iDate = date
 
     # get the quantity of how many stocks you can buy
@@ -91,7 +93,7 @@ def BH(ticker, cash, income, baseSMA, commission):
     slot.date = date
 
     # for every price, check to see if there was a stock split or a dividend issued
-    for i in range(1, len(prices)):
+    for i in range(startIDX, endIDX+1):
         # if any of the dates appear in the stock split data
         if timeExists(prices[i][0],splitPath):
             # get the fraction of splitting
@@ -111,16 +113,16 @@ def BH(ticker, cash, income, baseSMA, commission):
             data.taxes += d * slot.quantity * divTax(fedTax(income))
     
     # calculate profit/loss
-    data.pl = (float(prices[-1][4]) - slot.price) * slot.quantity
+    data.pl = (float(prices[endIDX][4]) - slot.price) * slot.quantity
 
     # calculate total assets
-    data.assets = cash + (float(prices[-1][4]) * slot.quantity)
+    data.assets = cash + (float(prices[endIDX][4]) * slot.quantity)
 
     # calculate cagr
-    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[endIDX][0])
 
     # record the last date
-    data.pDate = prices[-1][0]
+    data.pDate = prices[endIDX][0]
 
     # close file
     priceF.close()
@@ -129,7 +131,7 @@ def BH(ticker, cash, income, baseSMA, commission):
 
 
 
-def MT(ticker, cash, income, baseSMA, commission):
+def MT(ticker, startDate, endDate, cash, income, baseSMA, commission):
     # initialize the data
     data = Data()
     data.type = "Momentum trading"
@@ -150,26 +152,28 @@ def MT(ticker, cash, income, baseSMA, commission):
     # skipping the header
     next(prices)
 
-    # skip the first baseSMA days
-    for i in range(int(baseSMA)):
-        next(prices)
-    
     # listify the csv.reader file
     prices = list(prices)
 
+    # get the index of the starting date:
+    startIDX = binaryDateSearch(prices, 0, len(prices)-1, startDate)
+
+    # get the index of the ending date:
+    endIDX = binaryDateSearch(prices, 0, len(prices)-1, endDate)
+
     # calculate the current moving average
-    sma = movingAverage(baseSMA, prices[0][0], pricePath)
+    sma = movingAverage(baseSMA, prices[startIDX][0], pricePath)
 
     # initialize the stock and note lots
     slot = Slot()
     nlot = Nlot()
 
     # get the current date and record it in the data
-    date = prices[0][0]
+    date = prices[startIDX][0]
     data.iDate = date
     
     # get the current month
-    currD = prices[0][0]
+    currD = prices[startIDX][0]
     currD = datetime.strptime(currD, "%Y-%m-%d")
     month = currD.month
 
@@ -177,15 +181,15 @@ def MT(ticker, cash, income, baseSMA, commission):
     checked = True
 
     # if the closing price of the previous day is greater than or equal to the sma
-    if float(prices[0][4]) >= sma:
+    if float(prices[startIDX][4]) >= sma:
         # account for comissions
         cash -= commission
         data.comissions += commission
 
         # buy the stock at the current price
-        slot.price = float(prices[1][1])
+        slot.price = float(prices[startIDX+1][1])
         slot.quantity = math.floor(cash/slot.price)
-        slot.date = prices[1][0]
+        slot.date = prices[startIDX+1][0]
         
         # subtract the amount used
         cash -= slot.price * slot.quantity
@@ -201,15 +205,15 @@ def MT(ticker, cash, income, baseSMA, commission):
         data.comissions += commission
 
         # buy treasury notes
-        nlot.rate = getNoteYield(prices[1][0], notePath)
+        nlot.rate = getNoteYield(prices[startIDX+1][0], notePath)
         nlot.amount = cash
-        nlot.date = prices[1][0]
+        nlot.date = prices[startIDX+1][0]
 
         boughtStock = False
 
 
     # for every remaining price data
-    for i in range(1, len(prices)):
+    for i in range(startIDX+1, endIDX+1):
         # get the current date
         currentDate = prices[i][0]
         currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
@@ -299,7 +303,7 @@ def MT(ticker, cash, income, baseSMA, commission):
                     # buy the stock at the current price
                     slot.price = float(prices[i+1][1])
                     slot.quantity = math.floor(cash/slot.price)
-                    slot.date = prices[1][0]
+                    slot.date = prices[i+1][0]
 
                     # subtract the amount used
                     cash -= slot.price * slot.quantity
@@ -329,27 +333,27 @@ def MT(ticker, cash, income, baseSMA, commission):
 
     if boughtStock == True:
         # calculate profit/loss
-        data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
+        data.pl += (float(prices[endIDX][4]) - slot.price) * slot.quantity
 
         # calculate total assets
-        data.assets = cash + (float(prices[-1][4]) * slot.quantity)
+        data.assets = cash + (float(prices[endIDX][4]) * slot.quantity)
     
     else:
         # calculate total assets
         data.assets = cash + nlot.amount
 
     # calculate cagr
-    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[endIDX][0])
     
     # record the last date
-    data.pDate = prices[-1][0]
+    data.pDate = prices[endIDX][0]
 
     # close file
     priceF.close()
 
     return data
 
-def GX(ticker, cash, income, baseSMA, commission):
+def GX(ticker, startDate, endDate, cash, income, baseSMA, commission):
     # initialize the data
     data = Data()
     data.type = "Golden Cross Momentum trading"
@@ -369,28 +373,30 @@ def GX(ticker, cash, income, baseSMA, commission):
 
     # skipping the header
     next(prices)
-
-    # skip the first baseSMA days
-    for i in range(int(baseSMA)):
-        next(prices)
     
     # listify the csv.reader file
     prices = list(prices)
 
+    # get the index of the starting date:
+    startIDX = binaryDateSearch(prices, 0, len(prices)-1, startDate)
+
+    # get the index of the ending date:
+    endIDX = binaryDateSearch(prices, 0, len(prices)-1, endDate)
+
     # calculate the current moving averages
-    smaG = movingAverage(baseSMA, prices[0][0], pricePath)
-    smaL = movingAverage(math.floor(baseSMA/4), prices[0][0], pricePath)
+    smaG = movingAverage(baseSMA, prices[startIDX][0], pricePath)
+    smaL = movingAverage(math.floor(baseSMA/4), prices[startIDX][0], pricePath)
 
     # initialize the stock and note lots
     slot = Slot()
     nlot = Nlot()
 
     # get the current date and record it in the data
-    date = prices[0][0]
+    date = prices[startIDX][0]
     data.iDate = date
     
     # get the current month
-    currD = prices[0][0]
+    currD = prices[startIDX][0]
     currD = datetime.strptime(currD, "%Y-%m-%d")
     month = currD.month
 
@@ -404,9 +410,9 @@ def GX(ticker, cash, income, baseSMA, commission):
         data.comissions += commission
 
         # buy the stock at the current price
-        slot.price = float(prices[1][1])
+        slot.price = float(prices[startIDX+1][1])
         slot.quantity = math.floor(cash/slot.price)
-        slot.date = prices[1][0]
+        slot.date = prices[startIDX+1][0]
         
         # subtract the amount used
         cash -= slot.price * slot.quantity
@@ -422,15 +428,15 @@ def GX(ticker, cash, income, baseSMA, commission):
         data.comissions += commission
 
         # buy treasury notes
-        nlot.rate = getNoteYield(prices[1][0], notePath)
+        nlot.rate = getNoteYield(prices[startIDX+1][0], notePath)
         nlot.amount = cash
-        nlot.date = prices[1][0]
+        nlot.date = prices[startIDX+1][0]
 
         boughtStock = False
 
 
     # for every remaining price data
-    for i in range(1, len(prices)):
+    for i in range(startIDX+1, endIDX+1):
         # get the current date
         currentDate = prices[i][0]
         currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
@@ -521,7 +527,7 @@ def GX(ticker, cash, income, baseSMA, commission):
                     # buy the stock at the current price
                     slot.price = float(prices[i+1][1])
                     slot.quantity = math.floor(cash/slot.price)
-                    slot.date = prices[1][0]
+                    slot.date = prices[i+1][0]
 
                     # subtract the amount used
                     cash -= slot.price * slot.quantity
@@ -551,27 +557,27 @@ def GX(ticker, cash, income, baseSMA, commission):
 
     if boughtStock == True:
         # calculate profit/loss
-        data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
+        data.pl += (float(prices[endIDX][4]) - slot.price) * slot.quantity
 
         # calculate total assets
-        data.assets = cash + (float(prices[-1][4]) * slot.quantity)
+        data.assets = cash + (float(prices[endIDX][4]) * slot.quantity)
     
     else:
         # calculate total assets
         data.assets = cash + nlot.amount
 
     # calculate cagr
-    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[endIDX][0])
     
     # record the last date
-    data.pDate = prices[-1][0]
+    data.pDate = prices[endIDX][0]
 
     # close file
     priceF.close()
 
     return data
 
-def DCA(ticker, cash, income, baseSMA, commission, aigr, investFrac):
+def DCA(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, investFrac):
     # initialize the data
     data = Data()
     data.type = "Dollar Cost Averaging"
@@ -591,23 +597,25 @@ def DCA(ticker, cash, income, baseSMA, commission, aigr, investFrac):
 
     # skipping the header
     next(prices)
-
-    # skip the first baseSMA days
-    for i in range(int(baseSMA)):
-        next(prices)
     
     # listify the csv.reader file
     prices = list(prices)
+
+    # get the index of the starting date:
+    startIDX = binaryDateSearch(prices, 0, len(prices)-1, startDate)
+
+    # get the index of the ending date:
+    endIDX = binaryDateSearch(prices, 0, len(prices)-1, endDate)
 
     # initialize the stock lot list
     slotList = []
 
     # get the current date and record it in the data
-    date = prices[0][0]
+    date = prices[startIDX][0]
     data.iDate = date
     
     # get the current month and year
-    currD = prices[0][0]
+    currD = prices[startIDX][0]
     currD = datetime.strptime(currD, "%Y-%m-%d")
     year = currD.year
     month = currD.month
@@ -621,9 +629,9 @@ def DCA(ticker, cash, income, baseSMA, commission, aigr, investFrac):
     slot = Slot()
 
     # buy the stock at the current price
-    slot.price = float(prices[1][1])
+    slot.price = float(prices[startIDX+1][1])
     slot.quantity = math.floor(cash/slot.price)
-    slot.date = prices[1][0]
+    slot.date = prices[startIDX+1][0]
     
     # subtract the amount used
     cash -= slot.price * slot.quantity
@@ -638,7 +646,7 @@ def DCA(ticker, cash, income, baseSMA, commission, aigr, investFrac):
     checked = True
 
     # for every remaining price data
-    for i in range(1, len(prices)):
+    for i in range(startIDX+1, endIDX+1):
         # get the current date
         currentDate = prices[i][0]
         currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
@@ -718,17 +726,17 @@ def DCA(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         slot = slotList.pop()
 
         # add the profit/loss and total assets to the data
-        data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
-        data.assets += float(prices[-1][4]) * slot.quantity
+        data.pl += (float(prices[endIDX][4]) - slot.price) * slot.quantity
+        data.assets += float(prices[endIDX][4]) * slot.quantity
         
     # add the remaining cash to total assets
     data.assets += cash
     
     # calculate cagr
-    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[endIDX][0])
     
     # record the last date
-    data.pDate = prices[-1][0]
+    data.pDate = prices[endIDX][0]
 
     # close file
     priceF.close()
@@ -736,7 +744,7 @@ def DCA(ticker, cash, income, baseSMA, commission, aigr, investFrac):
     return data
 
 
-def PMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
+def PMT(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, investFrac):
     # initialize the data
     data = Data()
     data.type = "Parallel Momentum trading"
@@ -756,27 +764,29 @@ def PMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
 
     # skipping the header
     next(prices)
-
-    # skip the first baseSMA days
-    for i in range(int(baseSMA)):
-        next(prices)
     
     # listify the csv.reader file
     prices = list(prices)
 
+    # get the index of the starting date:
+    startIDX = binaryDateSearch(prices, 0, len(prices)-1, startDate)
+
+    # get the index of the ending date:
+    endIDX = binaryDateSearch(prices, 0, len(prices)-1, endDate)
+
     # calculate the current moving average
-    sma = movingAverage(baseSMA, prices[0][0], pricePath)
+    sma = movingAverage(baseSMA, prices[startIDX][0], pricePath)
     
     # initialize the stock and treasury note lot list
     slotList = []
     nlotList = []
 
     # get the current date and record it in the data
-    date = prices[0][0]
+    date = prices[startIDX][0]
     data.iDate = date
     
     # get the current month and year
-    currD = prices[i][0]
+    currD = prices[startIDX][0]
     currD = datetime.strptime(currD, "%Y-%m-%d")
     year = currD.year
     month = currD.month
@@ -788,14 +798,14 @@ def PMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
     budget = income*investFrac/12
 
     # if the closing price of the previous day is greater than or equal to the sma
-    if float(prices[0][4]) >= sma:
+    if float(prices[startIDX][4]) >= sma:
         # initialize the stock lot
         slot = Slot()
 
         # buy the stock at the current price
-        slot.price = float(prices[1][1])
+        slot.price = float(prices[startIDX+1][1])
         slot.quantity = math.floor(cash/slot.price)
-        slot.date = prices[1][0]
+        slot.date = prices[startIDX+1][0]
     
         # subtract the amount used
         cash -= slot.price * slot.quantity
@@ -816,9 +826,9 @@ def PMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         nlot = Nlot()
 
         # buy treasury notes
-        nlot.rate = getNoteYield(prices[1][0], notePath)
+        nlot.rate = getNoteYield(prices[startIDX+1][0], notePath)
         nlot.amount = cash
-        nlot.date = prices[1][0]
+        nlot.date = prices[startIDX+1][0]
 
         # subtract the amount put into treasury notes from cash
         cash -= nlot.amount 
@@ -830,7 +840,7 @@ def PMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         boughtStock = False
 
     # for every remaining price data
-    for i in range(1, len(prices)):
+    for i in range(startIDX+1, endIDX+1):
         # get the current date
         currentDate = prices[i][0]
         currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
@@ -1026,8 +1036,8 @@ def PMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
             slot = slotList.pop()
 
             # add the profit/loss and total assets to the data
-            data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
-            data.assets += float(prices[-1][4]) * slot.quantity
+            data.pl += (float(prices[endIDX][4]) - slot.price) * slot.quantity
+            data.assets += float(prices[endIDX][4]) * slot.quantity
         
         # add the remaining cash to total assets
         data.assets += cash
@@ -1043,17 +1053,17 @@ def PMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         data.assets += cash
 
     # calculate cagr
-    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[endIDX][0])
     
     # record the last date
-    data.pDate = prices[-1][0]
+    data.pDate = prices[endIDX][0]
 
     # close file
     priceF.close()
 
     return data
 
-def DMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
+def DMT(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, investFrac):
     # initialize the data
     data = Data()
     data.type = "Divergent Momentum trading"
@@ -1073,27 +1083,29 @@ def DMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
 
     # skipping the header
     next(prices)
-
-    # skip the first baseSMA days
-    for i in range(int(baseSMA)):
-        next(prices)
     
     # listify the csv.reader file
     prices = list(prices)
 
+    # get the index of the starting date:
+    startIDX = binaryDateSearch(prices, 0, len(prices)-1, startDate)
+
+    # get the index of the ending date:
+    endIDX = binaryDateSearch(prices, 0, len(prices)-1, endDate)
+
     # calculate the current moving average
-    sma = movingAverage(baseSMA, prices[0][0], pricePath)
+    sma = movingAverage(baseSMA, prices[startIDX][0], pricePath)
     
     # initialize the stock and treasury note lot list
     slotList = []
     nlotList = []
 
     # get the current date and record it in the data
-    date = prices[0][0]
+    date = prices[startIDX][0]
     data.iDate = date
     
     # get the current month and year
-    currD = prices[i][0]
+    currD = prices[startIDX][0]
     currD = datetime.strptime(currD, "%Y-%m-%d")
     year = currD.year
     month = currD.month
@@ -1105,14 +1117,14 @@ def DMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
     budget = income*investFrac/12
 
     # if the closing price of the previous day is greater than or equal to the sma
-    if float(prices[0][4]) >= sma:
+    if float(prices[startIDX][4]) >= sma:
         # initialize the stock lot
         slot = Slot()
 
         # buy the stock at the current price
-        slot.price = float(prices[1][1])
+        slot.price = float(prices[startIDX+1][1])
         slot.quantity = math.floor(cash/slot.price)
-        slot.date = prices[1][0]
+        slot.date = prices[startIDX+1][0]
     
         # subtract the amount used
         cash -= slot.price * slot.quantity
@@ -1133,9 +1145,9 @@ def DMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         nlot = Nlot()
 
         # buy treasury notes
-        nlot.rate = getNoteYield(prices[1][0], notePath)
+        nlot.rate = getNoteYield(prices[startIDX+1][0], notePath)
         nlot.amount = cash
-        nlot.date = prices[1][0]
+        nlot.date = prices[startIDX+1][0]
 
         # subtract the amount put into treasury notes from cash
         cash -= nlot.amount 
@@ -1147,7 +1159,7 @@ def DMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         boughtStock = False
 
     # for every remaining price data
-    for i in range(1, len(prices)):
+    for i in range(startIDX+1, endIDX+1):
         # get the current date
         currentDate = prices[i][0]
         currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
@@ -1349,8 +1361,8 @@ def DMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         slot = slotList.pop()
 
         # add the profit/loss and total assets to the data
-        data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
-        data.assets += float(prices[-1][4]) * slot.quantity   
+        data.pl += (float(prices[endIDX][4]) - slot.price) * slot.quantity
+        data.assets += float(prices[endIDX][4]) * slot.quantity   
 
     # while there are slots to get from the treasury list
     while nlotList:
@@ -1362,17 +1374,17 @@ def DMT(ticker, cash, income, baseSMA, commission, aigr, investFrac):
     data.assets += cash
 
     # calculate cagr
-    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[endIDX][0])
     
     # record the last date
-    data.pDate = prices[-1][0]
+    data.pDate = prices[endIDX][0]
 
     # close file
     priceF.close()
 
     return data
 
-def GPM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
+def GPM(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, investFrac):
     # initialize the data
     data = Data()
     data.type = "Golden Cross Parallel Momentum trading"
@@ -1392,28 +1404,30 @@ def GPM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
 
     # skipping the header
     next(prices)
-
-    # skip the first baseSMA days
-    for i in range(int(baseSMA)):
-        next(prices)
     
     # listify the csv.reader file
     prices = list(prices)
 
+    # get the index of the starting date:
+    startIDX = binaryDateSearch(prices, 0, len(prices)-1, startDate)
+
+    # get the index of the ending date:
+    endIDX = binaryDateSearch(prices, 0, len(prices)-1, endDate)
+
     # calculate the current moving averages
-    smaG = movingAverage(baseSMA, prices[0][0], pricePath)
-    smaL = movingAverage(math.floor(baseSMA/4), prices[0][0], pricePath)
+    smaG = movingAverage(baseSMA, prices[startIDX][0], pricePath)
+    smaL = movingAverage(math.floor(baseSMA/4), prices[startIDX][0], pricePath)
 
     # initialize the stock and treasury note lot list
     slotList = []
     nlotList = []
 
     # get the current date and record it in the data
-    date = prices[0][0]
+    date = prices[startIDX][0]
     data.iDate = date
     
     # get the current month and year
-    currD = prices[i][0]
+    currD = prices[startIDX][0]
     currD = datetime.strptime(currD, "%Y-%m-%d")
     year = currD.year
     month = currD.month
@@ -1430,9 +1444,9 @@ def GPM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         slot = Slot()
 
         # buy the stock at the current price
-        slot.price = float(prices[1][1])
+        slot.price = float(prices[startIDX+1][1])
         slot.quantity = math.floor(cash/slot.price)
-        slot.date = prices[1][0]
+        slot.date = prices[startIDX+1][0]
     
         # subtract the amount used
         cash -= slot.price * slot.quantity
@@ -1453,9 +1467,9 @@ def GPM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         nlot = Nlot()
 
         # buy treasury notes
-        nlot.rate = getNoteYield(prices[1][0], notePath)
+        nlot.rate = getNoteYield(prices[startIDX+1][0], notePath)
         nlot.amount = cash
-        nlot.date = prices[1][0]
+        nlot.date = prices[startIDX+1][0]
 
         # subtract the amount put into treasury notes from cash
         cash -= nlot.amount 
@@ -1467,7 +1481,7 @@ def GPM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         boughtStock = False
 
     # for every remaining price data
-    for i in range(1, len(prices)):
+    for i in range(startIDX+1, endIDX+1):
         # get the current date
         currentDate = prices[i][0]
         currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
@@ -1664,8 +1678,8 @@ def GPM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
             slot = slotList.pop()
 
             # add the profit/loss and total assets to the data
-            data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
-            data.assets += float(prices[-1][4]) * slot.quantity
+            data.pl += (float(prices[endIDX][4]) - slot.price) * slot.quantity
+            data.assets += float(prices[endIDX][4]) * slot.quantity
         
         # add the remaining cash to total assets
         data.assets += cash
@@ -1681,17 +1695,17 @@ def GPM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         data.assets += cash
 
     # calculate cagr
-    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[endIDX][0])
     
     # record the last date
-    data.pDate = prices[-1][0]
+    data.pDate = prices[endIDX][0]
 
     # close file
     priceF.close()
 
     return data
 
-def GDM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
+def GDM(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, investFrac):
     # initialize the data
     data = Data()
     data.type = "Golden Cross Divergent Momentum trading"
@@ -1711,28 +1725,30 @@ def GDM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
 
     # skipping the header
     next(prices)
-
-    # skip the first baseSMA days
-    for i in range(int(baseSMA)):
-        next(prices)
     
     # listify the csv.reader file
     prices = list(prices)
 
+    # get the index of the starting date:
+    startIDX = binaryDateSearch(prices, 0, len(prices)-1, startDate)
+
+    # get the index of the ending date:
+    endIDX = binaryDateSearch(prices, 0, len(prices)-1, endDate)
+
     # calculate the current moving averages
-    smaG = movingAverage(baseSMA, prices[0][0], pricePath)
-    smaL = movingAverage(math.floor(baseSMA/4), prices[0][0], pricePath)
+    smaG = movingAverage(baseSMA, prices[startIDX][0], pricePath)
+    smaL = movingAverage(math.floor(baseSMA/4), prices[startIDX][0], pricePath)
 
     # initialize the stock and treasury note lot list
     slotList = []
     nlotList = []
 
     # get the current date and record it in the data
-    date = prices[0][0]
+    date = prices[startIDX][0]
     data.iDate = date
     
     # get the current month and year
-    currD = prices[i][0]
+    currD = prices[startIDX][0]
     currD = datetime.strptime(currD, "%Y-%m-%d")
     year = currD.year
     month = currD.month
@@ -1749,9 +1765,9 @@ def GDM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         slot = Slot()
 
         # buy the stock at the current price
-        slot.price = float(prices[1][1])
+        slot.price = float(prices[startIDX+1][1])
         slot.quantity = math.floor(cash/slot.price)
-        slot.date = prices[1][0]
+        slot.date = prices[startIDX+1][0]
     
         # subtract the amount used
         cash -= slot.price * slot.quantity
@@ -1772,9 +1788,9 @@ def GDM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         nlot = Nlot()
 
         # buy treasury notes
-        nlot.rate = getNoteYield(prices[1][0], notePath)
+        nlot.rate = getNoteYield(prices[startIDX+1][0], notePath)
         nlot.amount = cash
-        nlot.date = prices[1][0]
+        nlot.date = prices[startIDX+1][0]
 
         # subtract the amount put into treasury notes from cash
         cash -= nlot.amount 
@@ -1786,7 +1802,7 @@ def GDM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         boughtStock = False
 
     # for every remaining price data
-    for i in range(1, len(prices)):
+    for i in range(startIDX+1, endIDX+1):
         # get the current date
         currentDate = prices[i][0]
         currentDate = datetime.strptime(currentDate, "%Y-%m-%d")
@@ -1989,8 +2005,8 @@ def GDM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
         slot = slotList.pop()
 
         # add the profit/loss and total assets to the data
-        data.pl += (float(prices[-1][4]) - slot.price) * slot.quantity
-        data.assets += float(prices[-1][4]) * slot.quantity   
+        data.pl += (float(prices[endIDX][4]) - slot.price) * slot.quantity
+        data.assets += float(prices[endIDX][4]) * slot.quantity   
 
     # while there are slots to get from the treasury list
     while nlotList:
@@ -2002,10 +2018,10 @@ def GDM(ticker, cash, income, baseSMA, commission, aigr, investFrac):
     data.assets += cash
 
     # calculate cagr
-    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[-1][0])
+    data.cagr = cagr(data.initial, data.assets, data.iDate, prices[endIDX][0])
     
     # record the last date
-    data.pDate = prices[-1][0]
+    data.pDate = prices[endIDX][0]
 
     # close file
     priceF.close()
@@ -2035,6 +2051,25 @@ def printResults(ticker, data1, data2):
 # calculates how certain strategies do within a historical context
 # ticker:       ticker of the stock being evaluated
 #
+# startDate:    the startDate of the calculations. If there is not enough data
+#                   beforehand to calculate the baseSMA, the earliest date
+#                   where the baseSMA can be calculated will be used instead.
+#
+#                   Dates should be inputted in "MM/DD/YYYY" format.
+#
+#                   If "MAX" is inputted, calculations will start at the earliest
+#                   possible.
+#
+#
+# endDate:      the endDate of the calculations. If there are not enough datapoints between
+#                   the startDate and the endDate, an error will be shown.
+#
+#                   Dates should be inputted in "MM/DD/YYYY" format.
+#
+#                   If "MAX" is inputted, calculations will end at the latest
+#                   date possible.
+#
+#
 # initial:      the initial amount of capital to be used
 #
 # income:       the annual income of the person
@@ -2054,7 +2089,7 @@ def printResults(ticker, data1, data2):
 #                   Set to zero in default.
 #                   Decimal should be inputted. (i.e. .02 for 2%, .015 for 1.5%)
 
-def investCalc(ticker, initial, income, strat, baseSMA = 200, commission = 5, investFrac = 0, aigr = 0):
+def investCalc(ticker, startDate, endDate, initial, income, strat, baseSMA = 200, commission = 5, investFrac = 0, aigr = 0):
     stockPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker
     notesPath = os.getcwd() + "\\notes\\notes.csv"
 
@@ -2069,34 +2104,39 @@ def investCalc(ticker, initial, income, strat, baseSMA = 200, commission = 5, in
 
     # if the there are enough data points for the SMA being used
     if dataExists(stockPricePath, baseSMA):
+        # get the start and end dates
+        startDate = getStartDate(stockPricePath, startDate, baseSMA)
+        endDate = getEndDate(stockPricePath, endDate, baseSMA)
+
+        # compare the strategies
         if strat == "MT":
-            MTdata = MT(ticker, initial, income, baseSMA, commission)
-            BHdata = BH(ticker, initial, income, baseSMA, commission)
+            MTdata = MT(ticker, startDate, endDate, initial, income, baseSMA, commission)
+            BHdata = BH(ticker, startDate, endDate, initial, income, baseSMA, commission)
             printResults(ticker, BHdata, MTdata)
         
         elif strat == "GX":
-            GXdata = GX(ticker, initial, income, baseSMA, commission)
-            BHdata = BH(ticker, initial, income, baseSMA, commission)
+            GXdata = GX(ticker, startDate, endDate, initial, income, baseSMA, commission)
+            BHdata = BH(ticker, startDate, endDate, initial, income, baseSMA, commission)
             printResults(ticker, BHdata, GXdata)
         
         elif strat == "PMT":
-            DCAdata = DCA(ticker, initial, income, baseSMA, commission, aigr, investFrac)
-            PMTdata = PMT(ticker, initial, income, baseSMA, commission, aigr, investFrac)
+            DCAdata = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+            PMTdata = PMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
             printResults(ticker, DCAdata, PMTdata)
 
         elif strat == "DMT":
-            DCAdata = DCA(ticker, initial, income, baseSMA, commission, aigr, investFrac)
-            DMTdata = DMT(ticker, initial, income, baseSMA, commission, aigr, investFrac)
+            DCAdata = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+            DMTdata = DMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
             printResults(ticker, DCAdata, DMTdata)
 
         elif strat == "GPM":
-            DCAdata = DCA(ticker, initial, income, baseSMA, commission, aigr, investFrac)
-            GPMdata = GPM(ticker, initial, income, baseSMA, commission, aigr, investFrac)
+            DCAdata = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+            GPMdata = GPM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
             printResults(ticker, DCAdata, GPMdata)
             
         elif strat == "GDM":
-            DCAdata = DCA(ticker, initial, income, baseSMA, commission, aigr, investFrac)
-            GDMdata = GDM(ticker, initial, income, baseSMA, commission, aigr, investFrac)
+            DCAdata = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+            GDMdata = GDM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
             printResults(ticker, DCAdata, GDMdata)
         
 
@@ -2119,4 +2159,4 @@ def investCalc(ticker, initial, income, strat, baseSMA = 200, commission = 5, in
 # disclaimer about how the current model doesn't possibly use accurate bonds information and handling
 # disclaimer about how bond income is not taxed
 
-investCalc("IEFA", 100000, 100000, "GDM", 200, 5, .5, .02)
+investCalc("SPY", "1/20/2001", "MAX", 100000, 100000, "GDM", 200, 5, .5, .02)
