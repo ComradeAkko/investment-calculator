@@ -80,12 +80,12 @@ def binaryClosestDateSearch(array, left, right, date):
         # If the specified date is earlier than mid, then it  
         # can only be present in left subarray 
         elif midDate > date: 
-            return binaryDateSearch(array, left, mid-1, date) 
+            return binaryClosestDateSearch(array, left, mid-1, date) 
   
         # Else the date can only be present  
         # in right subarray 
         else: 
-            return binaryDateSearch(array, mid + 1, right, date) 
+            return binaryClosestDateSearch(array, mid + 1, right, date) 
     
     # Date is not present in the array
     else:  
@@ -329,6 +329,7 @@ def getStartDate(dataPath, startDate, baseSMA):
 
     # convert the start date into datetime format
     if startDate != "MAX":
+        print(startDate)
         startDate = datetime.strptime(startDate, "%m/%d/%Y")
 
     # if the start date is labelled max
@@ -339,11 +340,14 @@ def getStartDate(dataPath, startDate, baseSMA):
     # if the start date is not labelled max
     else:
         # find the closest date
-        idx = binaryClosestSearchDate(data, 1, len(data)-1, startDate)
+        print(startDate)
+        idx = binaryClosestDateSearch(data, 1, len(data)-1, startDate)
 
+        print(idx)
         # if the date is less than the baseSMA, the earliest date is set to the baseSMA-th day
         if idx < baseSMA:
             idx = baseSMA
+        print(idx)
 
         startDate = datetime.strptime(data[idx][0], "%Y-%m-%d")
     
@@ -378,7 +382,7 @@ def getEndDate(dataPath, endDate, baseSMA):
     # if the end date is not labelled max
     else:
         # find the earliest date
-        idx = binaryClosestSearchDate(data, 1, len(data)-1, endDate)
+        idx = binaryClosestDateSearch(data, 1, len(data)-1, endDate)
 
         # if the date is less than the baseSMA, the earliest date is set to the baseSMA-th day
         if idx < baseSMA:

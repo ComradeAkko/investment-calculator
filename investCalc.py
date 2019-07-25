@@ -2159,4 +2159,4 @@ def investCalc(ticker, startDate, endDate, initial, income, strat, baseSMA = 200
 # disclaimer about how the current model doesn't possibly use accurate bonds information and handling
 # disclaimer about how bond income is not taxed
 
-investCalc("IEFA", "MAX", "MAX", 100000, 100000, "GDM", 200, 5, .5, .02)
+investCalc("SPY", "1/20/2001", "MAX", 100000, 100000, "GDM", 200, 5, .5, .02)
