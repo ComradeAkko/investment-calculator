@@ -2028,8 +2028,8 @@ def GDM(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, inv
 
     return data
 
-# prints results from testing
-def printResults(ticker, data1, data2):
+# prints 2 results from testing
+def printResults2(ticker, data1, data2):
     print("The following results are based on the ticker: " + ticker)
     print("From " + data1.iDate + " to " + data1.pDate + " the strategies " + data1.type + " and " + data2.type + " were compared:")
     print("with a starting value of $" + str(data1.initial) + "...")
@@ -2046,6 +2046,32 @@ def printResults(ticker, data1, data2):
     print("A total of $" + str(data2.taxes) + " was paid in taxes.")
     print("A total of $" + str(data2.comissions) + " was paid in comissions.")
     print(data2.type + " strategy had a compound annual growth rate of " + str(data2.cagr))
+
+# prints 3 results from testing
+def printResults3(ticker, data1, data2, data3):
+    print("The following results are based on the ticker: " + ticker)
+    print("From " + data1.iDate + " to " + data1.pDate + " the strategies " + data1.type + " and " + data2.type + " were compared:")
+    print("with a starting value of $" + str(data1.initial) + "...")
+    print(data1.type + " strategy had a final value of $" + str(data1.assets) + " with a profit/loss of $" + str(data1.pl))
+    print("A total of $" + str(data1.div) + " was paid in dividends.")
+    print("A total of $" + str(data1.treasury) + " was paid in treasury yields.")
+    print("A total of $" + str(data1.taxes) + " was paid in taxes.")
+    print("A total of $" + str(data1.comissions) + " was paid in comissions.")
+    print(data1.type + " strategy had a compound annual growth rate of " + str(data1.cagr))
+    print(" ")
+    print(data2.type + " strategy had a final value of $" + str(data2.assets) + " with a profit/loss of $" + str(data2.pl))
+    print("A total of $" + str(data2.div) + " was paid in dividends.")
+    print("A total of $" + str(data2.treasury) + " was paid in treasury yields.")
+    print("A total of $" + str(data2.taxes) + " was paid in taxes.")
+    print("A total of $" + str(data2.comissions) + " was paid in comissions.")
+    print(data2.type + " strategy had a compound annual growth rate of " + str(data2.cagr))
+    print(" ")
+    print(data3.type + " strategy had a final value of $" + str(data3.assets) + " with a profit/loss of $" + str(data3.pl))
+    print("A total of $" + str(data3.div) + " was paid in dividends.")
+    print("A total of $" + str(data3.treasury) + " was paid in treasury yields.")
+    print("A total of $" + str(data3.taxes) + " was paid in taxes.")
+    print("A total of $" + str(data3.comissions) + " was paid in comissions.")
+    print(data3.type + " strategy had a compound annual growth rate of " + str(data3.cagr))
 
 # InvestCalc():
 # calculates how certain strategies do within a historical context
@@ -2074,9 +2100,11 @@ def printResults(ticker, data1, data2):
 #
 # income:       the annual income of the person
 #
-# strat1:       the first strategy to be compared
+# strat1:       the first strategy to be compared. Is necessary.
 #
-# strat2:       the second strategy to be compared
+# strat2:       the second strategy to be compared. Is necessary.
+#
+# strat2:       the third strategy to be compared. Is not necessary. 
 #
 # baseSMA:      Base Simple Moving Average. Moving average base to be used in strategies.
 #                   Set to 200 in default.
@@ -2093,7 +2121,7 @@ def printResults(ticker, data1, data2):
 #                   Set to zero in default.
 #                   Decimal should be inputted. (i.e. .02 for 2%, .015 for 1.5%)
 
-def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, baseSMA = 200, commission = 5, investFrac = 0, aigr = 0):
+def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, strat3, baseSMA = 200, commission = 5, investFrac = 0, aigr = 0):
     stockPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker
     notesPath = os.getcwd() + "\\notes\\notes.csv"
 
@@ -2117,89 +2145,125 @@ def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, base
             # booleans to determine if a strat has been found
             found1 = False
             found2 = False
+            found3 = False
 
             # compare the strategies
-            if strat1 == "BH" or strat2 == "BH":
+            if strat1 == "BH" or strat2 == "BH" or strat3 == "BH":
                 if strat1 == "BH":
                     data1 = BH(ticker, startDate, endDate, initial, income, baseSMA, commission)
-                    Found1 = True
+                    found1 = True
 
                 if strat2 == "BH":
                     data2 = BH(ticker, startDate, endDate, initial, income, baseSMA, commission)
-                    Found2 = True
+                    found2 = True
+                
+                if strat3 == "BH":
+                    data3 = BH(ticker, startDate, endDate, initial, income, baseSMA, commission)
+                    found3 = True
 
-            if strat1 == "MT" or strat2 == "MT":
+            if strat1 == "MT" or strat2 == "MT" or strat3 == "MT":
                 if strat1 == "MT":
                     data1 = MT(ticker, startDate, endDate, initial, income, baseSMA, commission)
-                    Found1 = True
+                    found1 = True
 
                 if strat2 == "MT":
                     data2 = MT(ticker, startDate, endDate, initial, income, baseSMA, commission)
-                    Found2 = True
+                    found2 = True
+
+                if strat3 == "MT":
+                    data3 = MT(ticker, startDate, endDate, initial, income, baseSMA, commission)
+                    found3 = True
 
             
-            if strat1 == "GX" or strat2 == "GX":
+            if strat1 == "GX" or strat2 == "GX" or strat3 == "GX":
                 if strat1 == "GX":
                     data1 = GX(ticker, startDate, endDate, initial, income, baseSMA, commission)
-                    Found1 = True
+                    found1 = True
 
                 if strat2 == "GX":
                     data2 = GX(ticker, startDate, endDate, initial, income, baseSMA, commission)
-                    Found2 = True
+                    found2 = True
+
+                if strat3 == "GX":
+                    data3 = GX(ticker, startDate, endDate, initial, income, baseSMA, commission)
+                    found3 = True
             
-            if strat1 == "DCA" or strat2 == "DCA":
+            if strat1 == "DCA" or strat2 == "DCA" or strat3 == "DCA":
                 if strat1 == "DCA":
                     data1 = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-                    Found1 = True
+                    found1 = True
 
                 if strat2 == "DCA":
                     data2 = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-                    Found2 = True
+                    found2 = True
+                
+                if strat3 == "DCA":
+                    data3 = DCA(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    found3 = True
             
-            if strat1 == "PMT" or strat2 == "PMT":
+            if strat1 == "PMT" or strat2 == "PMT" or strat3 == "PMT":
                 if strat1 == "PMT":
                     data1 = PMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-                    Found1 = True
+                    found1 = True
 
                 if strat2 == "PMT":
                     data2 = PMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-                    Found2 = True
+                    found2 = True
 
-            if strat1 == "DMT" or strat2 == "DMT":
+                if strat3 == "PMT":
+                    data3 = PMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    found3 = True
+
+            if strat1 == "DMT" or strat2 == "DMT" or strat3 == "DMT":
                 if strat1 == "DMT":
                     data1 = DMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-                    Found1 = True
+                    found1 = True
 
                 if strat2 == "DMT":
                     data2 = DMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-                    Found2 = True
+                    found2 = True
 
-            if strat1 == "GPM" or strat2 == "GPM":
+                if strat3 == "DMT":
+                    data3 = DMT(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    found3 = True    
+
+            if strat1 == "GPM" or strat2 == "GPM" or strat3 == "GPM":
                 if strat1 == "GPM":
                     data1 = GPM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-                    Found1 = True
+                    found1 = True
 
                 if strat2 == "GPM":
                     data2 = GPM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-                    Found2 = True
+                    found2 = True
+
+                if strat3 == "GPM":
+                    data3 = GPM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    found3 = True
                 
-            if strat1 == "GDM" or strat2 == "GDM":
+            if strat1 == "GDM" or strat2 == "GDM" or strat3 == "GDM":
                 if strat1 == "GDM":
                     data1 = GDM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-                    Found1 = True
+                    found1 = True
 
                 if strat2 == "GDM":
                     data2 = GDM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
-                    Found2 = True
+                    found2 = True
+
+                if strat3 == "GDM":
+                    data3 = GDM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
+                    found3 = True
 
             # print the results
-            if Found1 and Found2:
-                printResults(ticker, data1, data2)
+            if found1 and found2:
+                if found3:
+                    printResults3(ticker, data1, data2, data3)
+                else:
+                    printResults2(ticker, data1, data2)
 
             else:
-                if Found1 == False and Found2 == False:
-                    print("Both strategies do not exist, please input valid strategies")
-                elif Found1 == False:
+                if found1 == False and found2 == False:
+                    print("First two strategies do not exist, please input at least two valid strategies")
+                elif found1 == False:
                     print("The first strategy does not exist, please input valid strategies")
                 else:
                     print("The second strategy does not exist, please input valid strategies")
@@ -2221,4 +2285,4 @@ def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, base
 # disclaimer about how the current model doesn't possibly use accurate bonds information and handling
 # disclaimer about how bond income is not taxed
 
-investCalc("SPY", "1/20/2001", "1/1/2019", 100000, 100000, "DMT", "PMT", 200, 5, .5, .02)
+investCalc("EFA", "1/20/2007", "5/1/2019", 100000, 100000, "DCA", "GDM", "DMT", 200, 5, .5, .02)
