@@ -62,6 +62,49 @@ def binaryMonthSearch(array, left, right, date):
         # Date is not present in the array 
         return -1
 
+# searches for date via binary search.
+# If the binary search doesn't yield the desired date,
+# The closest date's index will be returned
+def binaryClosestDateSearch(array, left, right, date):
+    # Check base case 
+    if right >= left: 
+        mid = math.floor(left + (right - left)/2)
+
+        # get the mid date in datetime form
+        midDate = datetime.strptime(array[mid][0], "%Y-%m-%d")
+  
+        # If the specified date is present at the middle itself 
+        if midDate == date: 
+            return mid 
+          
+        # If the specified date is earlier than mid, then it  
+        # can only be present in left subarray 
+        elif midDate > date: 
+            return binaryDateSearch(array, left, mid-1, date) 
+  
+        # Else the date can only be present  
+        # in right subarray 
+        else: 
+            return binaryDateSearch(array, mid + 1, right, date) 
+    
+    # Date is not present in the array
+    else:  
+        # if the right index has shifted to far left, return the first value    
+        if right < 0:
+            return 0
+
+        # if the left index has shifted to far right, return the last value
+        elif left >= len(array):
+            return len(array) - 1
+
+        # if the right or left indicies are both within bounds, return the right index.
+        # Although there is no real reason the right should be sent back over the left index,
+        # I simply feel like the later date is probably better as a starting point compared
+        # to an earlier one.
+        else:
+            return right
+
+
 def dataExists(datePath, limit = 1):
     # opening the file
     file = open(datePath)
@@ -267,3 +310,84 @@ def movingAverage(period, date, dataPath):
     file.close()
     
     return SMA
+
+# Returns the a starting date that exists in the data.  
+# May or may not be the date that was originally inputted.
+# If the exact date does not exist in the data, a close
+# date is returned instead.
+#
+# It is assumed that there are enough data points to find an appropriate start point.
+def getStartDate(dataPath, startDate, baseSMA):
+    file = open(dataPath)
+    data = csv.reader(file)
+
+    #skip the header
+    next(data)
+
+    # listify the data
+    data = list(data)
+
+    # convert the start date into datetime format
+    if startDate != "MAX":
+        startDate = datetime.strptime(startDate, "%m/%d/%Y")
+
+    # if the start date is labelled max
+    if startDate == "MAX":
+        # set the start date with the earliest possible date
+        startDate = datetime.strptime(data[baseSMA+1][0], "%Y-%m-%d")
+
+    # if the start date is not labelled max
+    else:
+        # find the closest date
+        idx = binaryClosestSearchDate(data, 1, len(data)-1, startDate)
+
+        # if the date is less than the baseSMA, the earliest date is set to the baseSMA-th day
+        if idx < baseSMA:
+            idx = baseSMA
+
+        startDate = datetime.strptime(data[idx][0], "%Y-%m-%d")
+    
+    # close the file
+    file.close()
+
+    # return the startDate
+    return startDate
+
+# Returns the an end date that exists in the data.  
+# May or may not be the date that was originally inputted.
+# If the exact date does not exist in the data, a close
+# date is returned instead.
+def getEndDate(dataPath, endDate, baseSMA):
+    file = open(dataPath)
+    data = csv.reader(file)
+
+    #skip the header
+    next(data)
+
+    # listify the data
+    data = list(data)
+
+    # convert the end date into datetime format
+    if endDate != "MAX":
+        endDate = datetime.strptime(endDate, "%m/%d/%Y")
+    
+    if endDate == "MAX":
+        # set the end date with the latest possible date
+        endDate = datetime.strptime(data[len(data)-1][0], "%Y-%m-%d")
+    
+    # if the end date is not labelled max
+    else:
+        # find the earliest date
+        idx = binaryClosestSearchDate(data, 1, len(data)-1, endDate)
+
+        # if the date is less than the baseSMA, the earliest date is set to the baseSMA-th day
+        if idx < baseSMA:
+            idx = baseSMA
+        
+        endDate = datetime.strptime(data[idx][0], "%Y-%m-%d")
+    
+    # close the file
+    file.close()
+
+    # return the startDate
+    return endDate
