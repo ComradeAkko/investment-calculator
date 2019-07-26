@@ -22,7 +22,7 @@ class App(QWidget):
         
         calculate = QPushButton('Calculate', self)
         calculate.setToolTip('This is an example button')
-        calculate.move(100,70)
+        calculate.move(50,450)
         calculate.clicked.connect(self.on_click)
         
         self.show()
