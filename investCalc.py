@@ -2050,7 +2050,7 @@ def printResults2(ticker, data1, data2):
 # prints 3 results from testing
 def printResults3(ticker, data1, data2, data3):
     print("The following results are based on the ticker: " + ticker)
-    print("From " + data1.iDate + " to " + data1.pDate + " the strategies " + data1.type + " and " + data2.type + " were compared:")
+    print("From " + data1.iDate + " to " + data1.pDate + " the strategies " + data1.type + ", " + data2.type + " and " + data3.type + " were compared:")
     print("with a starting value of $" + str(data1.initial) + "...")
     print(data1.type + " strategy had a final value of $" + str(data1.assets) + " with a profit/loss of $" + str(data1.pl))
     print("A total of $" + str(data1.div) + " was paid in dividends.")
@@ -2285,4 +2285,4 @@ def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, stra
 # disclaimer about how the current model doesn't possibly use accurate bonds information and handling
 # disclaimer about how bond income is not taxed
 
-investCalc("EFA", "1/20/2007", "5/1/2019", 100000, 100000, "DCA", "GDM", "DMT", 200, 5, .5, .02)
+investCalc("EEM", "1/20/2008", "5/1/2019", 100000, 100000, "DCA", "DMT", " ", 200, 5, .5, .02)
