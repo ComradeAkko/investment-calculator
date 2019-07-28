@@ -3,7 +3,7 @@
 import sys
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QPushButton, QWidget, 
         QVBoxLayout, QGroupBox, QHBoxLayout, QVBoxLayout, QLineEdit, QComboBox,
-        QDialog, QLabel, QTableWidget)
+        QDialog, QLabel, QTableWidget, QTabWidget)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 
@@ -42,8 +42,13 @@ class App(QDialog):
         mainLayout.setColumnStretch(0,1)
         mainLayout.setColumnStretch(1,10)
 
-        self.setLayout(mainLayout)
+        self.createTabs(mainLayout)
 
+        centralLayout = QGridLayout()
+        centralLayout.addLayout(self.tabWidget, 0, 0)
+
+        self.setLayout()
+        # self.setLayout(mainLayout)
 
         # initializing the app
         self.initUI()
@@ -52,6 +57,21 @@ class App(QDialog):
         self.setWindowTitle(self.title)
         
         self.show()
+
+    def createTabs(self, layout):
+        self.tabWidget = QTabWidget()
+        self.tabWidget.setSizePolicy(QSizePolicy.Preferred,
+            QSizePolicy.Ignored)
+        
+        tab1 = QWidget()
+        tab1.setLayout(layout)
+
+        tab2 = QWidget()
+        instructionsLabel = QLabel()
+
+        self.tabWidget.addTab(tab1, "&Main")
+        self.tabWidget.addTab(tab2, "&Instructions")
+        self.tabWidget.addTab(tab3, "&Investment Strategies")
     
     # creates a ticker box
     def createTickerBoxes(self):
