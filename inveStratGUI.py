@@ -3,7 +3,7 @@
 import sys
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QPushButton, QWidget, 
         QVBoxLayout, QGroupBox, QHBoxLayout, QVBoxLayout, QLineEdit, QComboBox,
-        QDialog, QLabel)
+        QDialog, QLabel, QTableWidget)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 
@@ -16,26 +16,32 @@ class App(QDialog):
         
         mainLayout = QGridLayout() 
 
-        # setting where it appears
-        self.left = 200
-        self.top = 150
-        self.width = 1024
-        self.height = 527
-
         # create group boxes
         self.createTickerBoxes()
         self.createStratBoxes()
+        self.createInitialBox()
         self.createStaticNumbersBoxes()
-        self.createActiveNumbersBoxes()
+        self.createIncomeBox()
+        self.createAIGRBox()
+        self.createInvesFracBox()
         self.createCalculateBox()
+        self.createResultsBox()
 
         # create and organize the layout
         mainLayout = QGridLayout()
         mainLayout.addLayout(self.tickerBoxes, 0, 0)
         mainLayout.addLayout(self.stratBoxes, 1, 0)
-        mainLayout.addLayout(self.staticNumbersBoxes, 2, 0)
-        mainLayout.addLayout(self.activeNumbersBoxes, 3, 0)
-        mainLayout.addLayout(self.calculateBox, 4, 0)
+        mainLayout.addLayout(self.initialBox, 2, 0)
+        mainLayout.addLayout(self.staticNumbersBoxes, 3, 0)
+        mainLayout.addLayout(self.incomeBox, 4, 0)
+        mainLayout.addLayout(self.aigrBox, 5, 0)
+        mainLayout.addLayout(self.investFracBox, 6, 0)
+        mainLayout.addLayout(self.calculateBox, 7, 0)
+        mainLayout.addLayout(self.resultsBox, 0, 1, 8, 10)
+
+        mainLayout.setColumnStretch(0,1)
+        mainLayout.setColumnStretch(1,10)
+
         self.setLayout(mainLayout)
 
 
@@ -44,7 +50,6 @@ class App(QDialog):
     
     def initUI(self):
         self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
         
         self.show()
     
@@ -117,15 +122,23 @@ class App(QDialog):
         self.stratBoxes.addWidget(strat3Label)
         self.stratBoxes.addWidget(strat3ComboBox)
 
-    # creates a box that contains the baseSMA and the commission values
-    def createStaticNumbersBoxes(self):
-        self.staticNumbersBoxes = QHBoxLayout()
+    # creates a box that contains the initial capital
+    def createInitialBox(self):
+        self.initialBox = QHBoxLayout()
 
         # create a intial capital line edit
         initialLineEdit = QLineEdit('10000')
 
         initialLabel = QLabel("&Initial capital:")
         initialLabel.setBuddy(initialLineEdit)
+
+        # add the widget
+        self.initialBox.addWidget(initialLabel)
+        self.initialBox.addWidget(initialLineEdit)
+
+    # creates a box that contains the baseSMA and the commission values
+    def createStaticNumbersBoxes(self):
+        self.staticNumbersBoxes = QHBoxLayout()
 
         # create baseSMA line edit
         baseSMALineEdit = QLineEdit('200')
@@ -140,19 +153,15 @@ class App(QDialog):
         commissionLabel.setBuddy(commissionLineEdit)
 
         # adding all widgets to the boxlayout
-        self.staticNumbersBoxes.addWidget(initialLabel)
-        self.staticNumbersBoxes.addWidget(initialLineEdit)
-        self.staticNumbersBoxes.addStretch(1)
         self.staticNumbersBoxes.addWidget(baseSMALabel)
         self.staticNumbersBoxes.addWidget(baseSMALineEdit)
         self.staticNumbersBoxes.addStretch(1)
         self.staticNumbersBoxes.addWidget(commissionLabel)
         self.staticNumbersBoxes.addWidget(commissionLineEdit)
 
-    # creates a box that contains the income, annual income growth rate,
-    # and the investment fraction
-    def createActiveNumbersBoxes(self):
-        self.activeNumbersBoxes = QHBoxLayout()
+    # creates a box that contains the income
+    def createIncomeBox(self):
+        self.incomeBox = QHBoxLayout()
 
         # create income line edit
         incomeLineEdit = QLineEdit('0')
@@ -160,27 +169,38 @@ class App(QDialog):
         incomeLabel = QLabel("&Annual pre-taxed income:")
         incomeLabel.setBuddy(incomeLineEdit)
 
+        # adding all widgets to the boxlayout
+        self.incomeBox.addWidget(incomeLabel)
+        self.incomeBox.addWidget(incomeLineEdit)
+
+    # creates a box containing the aigr
+    def createAIGRBox(self):
+        self.aigrBox = QHBoxLayout()
+
         # create annual income growth rate line edit
         aigrLineEdit = QLineEdit('0')
 
         aigrLabel = QLabel("&Annual income growth rate in decimal (i.e. 0.02):")
         aigrLabel.setBuddy(aigrLineEdit)
 
-        # create annual income growth rate line edit
+        # add the widget
+        self.aigrBox.addWidget(aigrLabel)
+        self.aigrBox.addWidget(aigrLineEdit)
+
+    # creates a box containing the investment fraction box
+    def createInvesFracBox(self):
+        self.investFracBox = QHBoxLayout()
+
+        # create the investment fraction line edit
         invesFracLineEdit = QLineEdit('0')
 
         invesFracLabel = QLabel("&Fraction of income reserved to investment in decimal (i.e. 0.5):")
         invesFracLabel.setBuddy(invesFracLineEdit)
 
-        # adding all widgets to the boxlayout
-        self.activeNumbersBoxes.addWidget(incomeLabel)
-        self.activeNumbersBoxes.addWidget(incomeLineEdit)
-        self.activeNumbersBoxes.addStretch(1)
-        self.activeNumbersBoxes.addWidget(aigrLabel)
-        self.activeNumbersBoxes.addWidget(aigrLineEdit)
-        self.activeNumbersBoxes.addStretch(1)
-        self.activeNumbersBoxes.addWidget(invesFracLabel)
-        self.activeNumbersBoxes.addWidget(invesFracLineEdit)
+        # add the widget
+        self.investFracBox.addWidget(invesFracLabel)
+        self.investFracBox.addWidget(invesFracLineEdit)        
+
     
     # create a box that contains the calculate button
     def createCalculateBox(self):
@@ -192,6 +212,16 @@ class App(QDialog):
         calculateButton.clicked.connect(self.on_click)
 
         self.calculateBox.addWidget(calculateButton)
+
+    # create a box that contains the results
+    def createResultsBox(self):
+        self.resultsBox = QHBoxLayout()
+
+        # create a table for results
+        resultsTable = QTableWidget(14,5)
+        resultsTable.horizontalHeader().setStretchLastSection(True)
+
+        self.resultsBox.addWidget(resultsTable)
 
 
 
