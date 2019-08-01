@@ -3,7 +3,7 @@
 import sys
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QPushButton, QWidget, 
         QVBoxLayout, QGroupBox, QHBoxLayout, QVBoxLayout, QLineEdit, QComboBox,
-        QDialog, QLabel)
+        QDialog, QLabel, QTableWidget, QTabWidget, QTextEdit)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 
@@ -16,37 +16,112 @@ class App(QDialog):
         
         mainLayout = QGridLayout() 
 
-        # setting where it appears
-        self.left = 200
-        self.top = 150
-        self.width = 1024
-        self.height = 527
-
         # create group boxes
         self.createTickerBoxes()
+        self.createInstructionBox()
         self.createStratBoxes()
+        self.createInitialBox()
         self.createStaticNumbersBoxes()
-        self.createActiveNumbersBoxes()
+        self.createIncomeBox()
+        self.createAIGRBox()
+        self.createInvesFracBox()
         self.createCalculateBox()
+        self.createResultsBox()
 
         # create and organize the layout
         mainLayout = QGridLayout()
         mainLayout.addLayout(self.tickerBoxes, 0, 0)
-        mainLayout.addLayout(self.stratBoxes, 1, 0)
-        mainLayout.addLayout(self.staticNumbersBoxes, 2, 0)
-        mainLayout.addLayout(self.activeNumbersBoxes, 3, 0)
-        mainLayout.addLayout(self.calculateBox, 4, 0)
-        self.setLayout(mainLayout)
+        mainLayout.addLayout(self.instructBoxes, 1, 0)
+        mainLayout.addLayout(self.stratBoxes, 2, 0)
+        mainLayout.addLayout(self.initialBox, 3, 0)
+        mainLayout.addLayout(self.staticNumbersBoxes, 4, 0)
+        mainLayout.addLayout(self.incomeBox, 5, 0)
+        mainLayout.addLayout(self.aigrBox, 6, 0)
+        mainLayout.addLayout(self.investFracBox, 7, 0)
+        mainLayout.addLayout(self.calculateBox, 8, 0)
+        mainLayout.addLayout(self.resultsBox, 0, 1, 9, 10)
 
+        mainLayout.setColumnStretch(0,1)
+        mainLayout.setColumnStretch(1,10)
+
+        self.createTabs(mainLayout)
+
+        centralLayout = QGridLayout()
+        centralLayout.addWidget(self.tabWidget, 0, 0)
+
+        self.setLayout(centralLayout)
 
         # initializing the app
         self.initUI()
     
+    # initializes the UI
     def initUI(self):
         self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
         
         self.show()
+
+    # creates the tabs
+    def createTabs(self, layout):
+        self.tabBoxes = QHBoxLayout()
+
+        self.tabWidget = QTabWidget()
+
+        tab1 = QWidget()
+        tab1.setLayout(layout)
+
+        tab2 = QWidget()
+        inveStratTextEdit = QTextEdit()
+        inveStratTextEdit.setPlainText("Investment strategies\n"
+                                    "by ComradeAkko\n\n"
+                                    "The following are the investment strategies that can be used with the\n" 
+                                    "function. Static strategies are ones where the only capital used is\n" 
+                                    "the initial capital. Active strategies include monthly payments.\n\n\n"
+                                    "Static Strategies\n\n"
+                                    "Buy and Hold (BH):\n"
+                                    "After an initial investment, the shares are held for the entirety of\n" 
+                                    "its period.\n\n"
+                                    "Regular Momentum Trading (MT):\n"
+                                    "After an intial investment, the shares are held as long as the price\n" 
+                                    "is above its 200-day moving average. If the price is below its 200-day\n"
+                                    "moving average, it is sold and transferred to bonds.\n\n"
+                                    "Golden-Cross Momentum Trading (GX):\n"
+                                    "After an initial investment, shares are held when the price is above\n"
+                                    "both its 200-day and 50-day moving average. If the 50-day moving average\n"
+                                    "crosses below the 200-day moving average, the shares are sold and\n"
+                                    "transferred to bonds.\n\n\n"
+                                    "Active Strategies\n\n"
+                                    "Dollar-cost Averaging (DCA):\n"
+                                    "After the initial lump-sum investment, every month on the 10th,\n"
+                                    "as many shares as many are allowed are bought regardless of whether\n"
+                                    "prices are high or low. Shares are never sold.\n\n"
+                                    "Parallel Momentum Trading (PMT):\n"
+                                    "After the intial lump-sum investment,every month on the 10th,\n"
+                                    "shares are bought as long as the current price is higher than the 200-day\n"
+                                    "moving average. If the current price drops below the 200-day moving\n"
+                                    "average, the shares are sold and transferred to bonds. Subsequent\n"
+                                    "investment income will be directed to bonds (**parallel** with current\n"
+                                    "investments) until the price of the shares rises above the 200-day\n"
+                                    "moving average again.\n\n"
+                                    "Divergent Momentum Trading (DMT):\n"
+                                    "After the initial lump-sum investment, every month on the 10th,\n"
+                                    "shares are bought as long as the current price is higher than the 200-day\n"
+                                    "moving average. If the current price drops below the 200-day moving\n"
+                                    "average, the shares are sold and transferred to bonds. Subsequent\n"
+                                    "investment income will be directed to stocks (**divergent** with\n"
+                                    "current investmenets) until the price of the shares rises above the\n"
+                                    "200-day moving average again.\n\n"
+                                    "Golden-Cross Parallel Momentum Trading (GPM):\n"
+                                    "A combination of PMT and using both 200-day and 50-day moving averages.\n\n"
+                                    "Golden-Cross Divergent Momentum Trading (GDM):\n"
+                                    "A combination of DMT and using both 200-day and 50-day moving averages.")
+                            
+        tab3hbox = QHBoxLayout()
+        tab3hbox.setContentsMargins(5, 5, 5, 5)
+        tab3hbox.addWidget(inveStratTextEdit)
+        tab2.setLayout(tab3hbox)
+
+        self.tabWidget.addTab(tab1, "&Main")
+        self.tabWidget.addTab(tab2, "&Investment Strategies")
     
     # creates a ticker box
     def createTickerBoxes(self):
@@ -78,6 +153,16 @@ class App(QDialog):
         self.tickerBoxes.addWidget(startDLineEdit)
         self.tickerBoxes.addWidget(endDLabel)
         self.tickerBoxes.addWidget(endDLineEdit)
+
+    # creates an instruction box
+    def createInstructionBox(self):
+        self.instructBoxes = QHBoxLayout()
+
+        instructLabel = QLabel("^Note: Dates also accept the answer 'MAX' to indicate the earliest/latest date in both start/end dates.\n")
+        
+        self.instructBoxes.addWidget(instructLabel)
+
+        
 
     # creates a strategy box
     def createStratBoxes(self):
@@ -117,15 +202,23 @@ class App(QDialog):
         self.stratBoxes.addWidget(strat3Label)
         self.stratBoxes.addWidget(strat3ComboBox)
 
-    # creates a box that contains the baseSMA and the commission values
-    def createStaticNumbersBoxes(self):
-        self.staticNumbersBoxes = QHBoxLayout()
+    # creates a box that contains the initial capital
+    def createInitialBox(self):
+        self.initialBox = QHBoxLayout()
 
         # create a intial capital line edit
         initialLineEdit = QLineEdit('10000')
 
         initialLabel = QLabel("&Initial capital:")
         initialLabel.setBuddy(initialLineEdit)
+
+        # add the widget
+        self.initialBox.addWidget(initialLabel)
+        self.initialBox.addWidget(initialLineEdit)
+
+    # creates a box that contains the baseSMA and the commission values
+    def createStaticNumbersBoxes(self):
+        self.staticNumbersBoxes = QHBoxLayout()
 
         # create baseSMA line edit
         baseSMALineEdit = QLineEdit('200')
@@ -140,19 +233,15 @@ class App(QDialog):
         commissionLabel.setBuddy(commissionLineEdit)
 
         # adding all widgets to the boxlayout
-        self.staticNumbersBoxes.addWidget(initialLabel)
-        self.staticNumbersBoxes.addWidget(initialLineEdit)
-        self.staticNumbersBoxes.addStretch(1)
         self.staticNumbersBoxes.addWidget(baseSMALabel)
         self.staticNumbersBoxes.addWidget(baseSMALineEdit)
         self.staticNumbersBoxes.addStretch(1)
         self.staticNumbersBoxes.addWidget(commissionLabel)
         self.staticNumbersBoxes.addWidget(commissionLineEdit)
 
-    # creates a box that contains the income, annual income growth rate,
-    # and the investment fraction
-    def createActiveNumbersBoxes(self):
-        self.activeNumbersBoxes = QHBoxLayout()
+    # creates a box that contains the income
+    def createIncomeBox(self):
+        self.incomeBox = QHBoxLayout()
 
         # create income line edit
         incomeLineEdit = QLineEdit('0')
@@ -160,27 +249,38 @@ class App(QDialog):
         incomeLabel = QLabel("&Annual pre-taxed income:")
         incomeLabel.setBuddy(incomeLineEdit)
 
+        # adding all widgets to the boxlayout
+        self.incomeBox.addWidget(incomeLabel)
+        self.incomeBox.addWidget(incomeLineEdit)
+
+    # creates a box containing the aigr
+    def createAIGRBox(self):
+        self.aigrBox = QHBoxLayout()
+
         # create annual income growth rate line edit
         aigrLineEdit = QLineEdit('0')
 
         aigrLabel = QLabel("&Annual income growth rate in decimal (i.e. 0.02):")
         aigrLabel.setBuddy(aigrLineEdit)
 
-        # create annual income growth rate line edit
+        # add the widget
+        self.aigrBox.addWidget(aigrLabel)
+        self.aigrBox.addWidget(aigrLineEdit)
+
+    # creates a box containing the investment fraction box
+    def createInvesFracBox(self):
+        self.investFracBox = QHBoxLayout()
+
+        # create the investment fraction line edit
         invesFracLineEdit = QLineEdit('0')
 
         invesFracLabel = QLabel("&Fraction of income reserved to investment in decimal (i.e. 0.5):")
         invesFracLabel.setBuddy(invesFracLineEdit)
 
-        # adding all widgets to the boxlayout
-        self.activeNumbersBoxes.addWidget(incomeLabel)
-        self.activeNumbersBoxes.addWidget(incomeLineEdit)
-        self.activeNumbersBoxes.addStretch(1)
-        self.activeNumbersBoxes.addWidget(aigrLabel)
-        self.activeNumbersBoxes.addWidget(aigrLineEdit)
-        self.activeNumbersBoxes.addStretch(1)
-        self.activeNumbersBoxes.addWidget(invesFracLabel)
-        self.activeNumbersBoxes.addWidget(invesFracLineEdit)
+        # add the widget
+        self.investFracBox.addWidget(invesFracLabel)
+        self.investFracBox.addWidget(invesFracLineEdit)        
+
     
     # create a box that contains the calculate button
     def createCalculateBox(self):
@@ -192,6 +292,16 @@ class App(QDialog):
         calculateButton.clicked.connect(self.on_click)
 
         self.calculateBox.addWidget(calculateButton)
+
+    # create a box that contains the results
+    def createResultsBox(self):
+        self.resultsBox = QHBoxLayout()
+
+        # create a table for results
+        resultsTable = QTableWidget(14,5)
+        resultsTable.horizontalHeader().setStretchLastSection(True)
+
+        self.resultsBox.addWidget(resultsTable)
 
 
 
