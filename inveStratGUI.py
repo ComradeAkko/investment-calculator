@@ -3,7 +3,7 @@
 import sys
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QPushButton, QWidget, 
         QVBoxLayout, QGroupBox, QHBoxLayout, QVBoxLayout, QLineEdit, QComboBox,
-        QDialog, QLabel, QTableWidget, QTabWidget)
+        QDialog, QLabel, QTableWidget, QTabWidget, QTextEdit)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 
@@ -18,6 +18,7 @@ class App(QDialog):
 
         # create group boxes
         self.createTickerBoxes()
+        self.createInstructionBox()
         self.createStratBoxes()
         self.createInitialBox()
         self.createStaticNumbersBoxes()
@@ -30,14 +31,15 @@ class App(QDialog):
         # create and organize the layout
         mainLayout = QGridLayout()
         mainLayout.addLayout(self.tickerBoxes, 0, 0)
-        mainLayout.addLayout(self.stratBoxes, 1, 0)
-        mainLayout.addLayout(self.initialBox, 2, 0)
-        mainLayout.addLayout(self.staticNumbersBoxes, 3, 0)
-        mainLayout.addLayout(self.incomeBox, 4, 0)
-        mainLayout.addLayout(self.aigrBox, 5, 0)
-        mainLayout.addLayout(self.investFracBox, 6, 0)
-        mainLayout.addLayout(self.calculateBox, 7, 0)
-        mainLayout.addLayout(self.resultsBox, 0, 1, 8, 10)
+        mainLayout.addLayout(self.instructBoxes, 1, 0)
+        mainLayout.addLayout(self.stratBoxes, 2, 0)
+        mainLayout.addLayout(self.initialBox, 3, 0)
+        mainLayout.addLayout(self.staticNumbersBoxes, 4, 0)
+        mainLayout.addLayout(self.incomeBox, 5, 0)
+        mainLayout.addLayout(self.aigrBox, 6, 0)
+        mainLayout.addLayout(self.investFracBox, 7, 0)
+        mainLayout.addLayout(self.calculateBox, 8, 0)
+        mainLayout.addLayout(self.resultsBox, 0, 1, 9, 10)
 
         mainLayout.setColumnStretch(0,1)
         mainLayout.setColumnStretch(1,10)
@@ -68,14 +70,58 @@ class App(QDialog):
         tab1.setLayout(layout)
 
         tab2 = QWidget()
-        instructionsLabel = QLabel("")
-
-        tab3 = QWidget()
-        investStratLabel = QLabel("")
+        inveStratTextEdit = QTextEdit()
+        inveStratTextEdit.setPlainText("Investment strategies\n"
+                                    "by ComradeAkko\n\n"
+                                    "The following are the investment strategies that can be used with the\n" 
+                                    "function. Static strategies are ones where the only capital used is\n" 
+                                    "the initial capital. Active strategies include monthly payments.\n\n\n"
+                                    "Static Strategies\n\n"
+                                    "Buy and Hold (BH):\n"
+                                    "After an initial investment, the shares are held for the entirety of\n" 
+                                    "its period.\n\n"
+                                    "Regular Momentum Trading (MT):\n"
+                                    "After an intial investment, the shares are held as long as the price\n" 
+                                    "is above its 200-day moving average. If the price is below its 200-day\n"
+                                    "moving average, it is sold and transferred to bonds.\n\n"
+                                    "Golden-Cross Momentum Trading (GX):\n"
+                                    "After an initial investment, shares are held when the price is above\n"
+                                    "both its 200-day and 50-day moving average. If the 50-day moving average\n"
+                                    "crosses below the 200-day moving average, the shares are sold and\n"
+                                    "transferred to bonds.\n\n\n"
+                                    "Active Strategies\n\n"
+                                    "Dollar-cost Averaging (DCA):\n"
+                                    "After the initial lump-sum investment, every month on the 10th,\n"
+                                    "as many shares as many are allowed are bought regardless of whether\n"
+                                    "prices are high or low. Shares are never sold.\n\n"
+                                    "Parallel Momentum Trading (PMT):\n"
+                                    "After the intial lump-sum investment,every month on the 10th,\n"
+                                    "shares are bought as long as the current price is higher than the 200-day\n"
+                                    "moving average. If the current price drops below the 200-day moving\n"
+                                    "average, the shares are sold and transferred to bonds. Subsequent\n"
+                                    "investment income will be directed to bonds (**parallel** with current\n"
+                                    "investments) until the price of the shares rises above the 200-day\n"
+                                    "moving average again.\n\n"
+                                    "Divergent Momentum Trading (DMT):\n"
+                                    "After the initial lump-sum investment, every month on the 10th,\n"
+                                    "shares are bought as long as the current price is higher than the 200-day\n"
+                                    "moving average. If the current price drops below the 200-day moving\n"
+                                    "average, the shares are sold and transferred to bonds. Subsequent\n"
+                                    "investment income will be directed to stocks (**divergent** with\n"
+                                    "current investmenets) until the price of the shares rises above the\n"
+                                    "200-day moving average again.\n\n"
+                                    "Golden-Cross Parallel Momentum Trading (GPM):\n"
+                                    "A combination of PMT and using both 200-day and 50-day moving averages.\n\n"
+                                    "Golden-Cross Divergent Momentum Trading (GDM):\n"
+                                    "A combination of DMT and using both 200-day and 50-day moving averages.")
+                            
+        tab3hbox = QHBoxLayout()
+        tab3hbox.setContentsMargins(5, 5, 5, 5)
+        tab3hbox.addWidget(inveStratTextEdit)
+        tab2.setLayout(tab3hbox)
 
         self.tabWidget.addTab(tab1, "&Main")
-        self.tabWidget.addTab(tab2, "&Instructions")
-        self.tabWidget.addTab(tab3, "&Investment Strategies")
+        self.tabWidget.addTab(tab2, "&Investment Strategies")
     
     # creates a ticker box
     def createTickerBoxes(self):
@@ -107,6 +153,16 @@ class App(QDialog):
         self.tickerBoxes.addWidget(startDLineEdit)
         self.tickerBoxes.addWidget(endDLabel)
         self.tickerBoxes.addWidget(endDLineEdit)
+
+    # creates an instruction box
+    def createInstructionBox(self):
+        self.instructBoxes = QHBoxLayout()
+
+        instructLabel = QLabel("^Note: Dates also accept the answer 'MAX' to indicate the earliest/latest date in both start/end dates.\n")
+        
+        self.instructBoxes.addWidget(instructLabel)
+
+        
 
     # creates a strategy box
     def createStratBoxes(self):
