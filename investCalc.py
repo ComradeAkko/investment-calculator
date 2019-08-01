@@ -2285,4 +2285,4 @@ def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, stra
 # disclaimer about how the current model doesn't possibly use accurate bonds information and handling
 # disclaimer about how bond income is not taxed
 
-investCalc("EEM", "1/20/2008", "5/1/2019", 100000, 100000, "DCA", "DMT", " ", 200, 5, .5, .02)
+# investCalc("EEM", "1/20/2008", "5/1/2019", 100000, 100000, "DCA", "DMT", " ", 200, 5, .5, .02)

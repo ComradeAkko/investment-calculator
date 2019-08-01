@@ -3,9 +3,10 @@
 import sys
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QPushButton, QWidget, 
         QVBoxLayout, QGroupBox, QHBoxLayout, QVBoxLayout, QLineEdit, QComboBox,
-        QDialog, QLabel, QTableWidget, QTabWidget, QTextEdit)
+        QDialog, QLabel, QTableWidget, QTabWidget, QTextEdit, QTableWidgetItem)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
+from investCalc import *
 
 # based on Python Tutorials @ https://build-system.fman.io/pyqt5-tutorial
 class App(QDialog):
@@ -27,6 +28,8 @@ class App(QDialog):
         self.createInvesFracBox()
         self.createCalculateBox()
         self.createResultsBox()
+        self.createExtraBasicBox()
+        self.createExtraDateBox()
 
         # create and organize the layout
         mainLayout = QGridLayout()
@@ -39,7 +42,9 @@ class App(QDialog):
         mainLayout.addLayout(self.aigrBox, 6, 0)
         mainLayout.addLayout(self.investFracBox, 7, 0)
         mainLayout.addLayout(self.calculateBox, 8, 0)
-        mainLayout.addLayout(self.resultsBox, 0, 1, 9, 10)
+        mainLayout.addLayout(self.resultsBox, 0, 1, 7, 10)
+        mainLayout.addLayout(self.extraBasicBox, 7, 1)
+        mainLayout.addLayout(self.extraDateBox, 8, 1)
 
         mainLayout.setColumnStretch(0,1)
         mainLayout.setColumnStretch(1,10)
@@ -289,7 +294,7 @@ class App(QDialog):
         # create calculate line edit
         calculateButton = QPushButton('Calculate', self)
         calculateButton.setToolTip('This is an example button')
-        calculateButton.clicked.connect(self.on_click)
+        calculateButton.clicked.connect(self.clickCalculate)
 
         self.calculateBox.addWidget(calculateButton)
 
@@ -298,16 +303,79 @@ class App(QDialog):
         self.resultsBox = QHBoxLayout()
 
         # create a table for results
-        resultsTable = QTableWidget(14,5)
+        resultsTable = QTableWidget(7,3)
         resultsTable.horizontalHeader().setStretchLastSection(True)
 
+        # Inputting info
+        header0 = QTableWidgetItem("Commission:")
+        header1 = QTableWidgetItem("Taxes:")
+        header2 = QTableWidgetItem("Treasury Yield:")
+        header3 = QTableWidgetItem("Dividend received:")
+        header4 = QTableWidgetItem("Profit/loss from trading:")
+        header5 = QTableWidgetItem("Final Assets:")
+        header6 = QTableWidgetItem("CAGR:")
+        header7 = QTableWidgetItem("strategy1")
+        header8 = QTableWidgetItem("strategy2")
+        header9 = QTableWidgetItem("strategy3")
+        resultsTable.setVerticalHeaderItem(0, header0)
+        resultsTable.setVerticalHeaderItem(1, header1)
+        resultsTable.setVerticalHeaderItem(2, header2)
+        resultsTable.setVerticalHeaderItem(3, header3)
+        resultsTable.setVerticalHeaderItem(4, header4)
+        resultsTable.setVerticalHeaderItem(5, header5)
+        resultsTable.setVerticalHeaderItem(6, header6)
+        resultsTable.setHorizontalHeaderItem(0, header7)
+        resultsTable.setHorizontalHeaderItem(1, header8)
+        resultsTable.setHorizontalHeaderItem(2, header9)
+
+
         self.resultsBox.addWidget(resultsTable)
+    
+    # create more results boxes that contain the ticker and initial capital info
+    def createExtraBasicBox(self):
+        self.extraBasicBox = QHBoxLayout()
+
+        # create labels to contain the basic info
+        basicTickerLabel = QLabel("Ticker: ")
+        basicInitialLabel = QLabel("Initial Capital: ")
+        self.extraBasicBox.addWidget(basicTickerLabel)
+        self.extraBasicBox.addWidget(basicInitialLabel)
+
+    # create more results boxes that contain the start/end date info
+    def createExtraDateBox(self):
+        self.extraDateBox = QHBoxLayout()
+
+        # create labels to contain the basic info
+        basicStartDate = QLabel("Start Date: ")
+        basicEndDate = QLabel("End date: ")
+        self.extraDateBox.addWidget(basicStartDate)
+        self.extraDateBox.addWidget(basicEndDate)
 
 
 
     @pyqtSlot()
-    def on_click(self):
-        print('Clicked')
+    def clickCalculate(self):
+        ticker = self.tickerBoxes.itemAt(1).widget().text()
+        startDate = self.tickerBoxes.itemAt(4).widget().text()
+        endDate = self.tickerBoxes.itemAt(6).widget().text()
+        strat1 = self.stratBoxes.itemAt(1).widget().currentText()
+        strat2 = self.stratBoxes.itemAt(4).widget().currentText()
+        strat3 = self.stratBoxes.itemAt(7).widget().currentText()
+        capital = float(self.initialBox.itemAt(1).widget().text())
+        sma = int(self.staticNumbersBoxes.itemAt(1).widget().text())
+        commission = float(self.staticNumbersBoxes.itemAt(4).widget().text())
+        income = float(self.incomeBox.itemAt(1).widget().text())
+        aigr = float(self.aigrBox.itemAt(1).widget().text())
+        invesFrac = float(self.investFracBox.itemAt(1).widget().text())
+
+        investCalc(ticker, startDate, endDate, capital, income, strat1, strat2, strat3, sma, commission, invesFrac, aigr)
+
+
+
+
+
+
+
 
     
 if __name__ == '__main__':
