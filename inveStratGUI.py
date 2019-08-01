@@ -45,29 +45,33 @@ class App(QDialog):
         self.createTabs(mainLayout)
 
         centralLayout = QGridLayout()
-        centralLayout.addLayout(self.tabWidget, 0, 0)
+        centralLayout.addWidget(self.tabWidget, 0, 0)
 
-        self.setLayout()
-        # self.setLayout(mainLayout)
+        self.setLayout(centralLayout)
 
         # initializing the app
         self.initUI()
     
+    # initializes the UI
     def initUI(self):
         self.setWindowTitle(self.title)
         
         self.show()
 
+    # creates the tabs
     def createTabs(self, layout):
+        self.tabBoxes = QHBoxLayout()
+
         self.tabWidget = QTabWidget()
-        self.tabWidget.setSizePolicy(QSizePolicy.Preferred,
-            QSizePolicy.Ignored)
-        
+
         tab1 = QWidget()
         tab1.setLayout(layout)
 
         tab2 = QWidget()
-        instructionsLabel = QLabel()
+        instructionsLabel = QLabel("")
+
+        tab3 = QWidget()
+        investStratLabel = QLabel("")
 
         self.tabWidget.addTab(tab1, "&Main")
         self.tabWidget.addTab(tab2, "&Instructions")
