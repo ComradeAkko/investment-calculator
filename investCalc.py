@@ -10,6 +10,16 @@ import csv, operator, math, os
 
 # Classes:
 
+# stores results data for later use
+class Result:
+    def __init__(self):
+        self.ticker = 0
+        self.strat1 = 0
+        self.strat2 = 0
+        self.strat3 = 0
+        self.errorBoo = False
+        self.errorMess = "nothing"
+
 # stores data for easy returning of data
 class Data:
     def __init__(self):
@@ -2253,12 +2263,22 @@ def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, stra
                     data3 = GDM(ticker, startDate, endDate, initial, income, baseSMA, commission, aigr, investFrac)
                     found3 = True
 
-            # print the results
+            # return the results
             if found1 and found2:
                 if found3:
-                    printResults3(ticker, data1, data2, data3)
+                    results = Result()
+                    results.strat1 = data1
+                    results.strat2 = data2
+                    results.strat3 = data3
+                    results.ticker = ticker
+
                 else:
-                    printResults2(ticker, data1, data2)
+                    results = Result()
+                    results.strat1 = data1
+                    results.strat2 = data2
+                    results.ticker = ticker
+
+                return results
 
             else:
                 if found1 == False and found2 == False:
