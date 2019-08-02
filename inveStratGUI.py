@@ -302,7 +302,7 @@ class App(QDialog):
     def createResultsBox(self):
         self.resultsBox = QHBoxLayout()
 
-        # create a self.resultsBox.itemAt(0).widget() for results
+        # create a table for results
         resultsTable = QTableWidget(7,3)
         resultsTable.horizontalHeader().setStretchLastSection(True)
 
@@ -353,7 +353,7 @@ class App(QDialog):
         self.extraDateBox.addWidget(basicEndDate)
 
 
-
+    # what to do when calculate button is pushed
     @pyqtSlot()
     def clickCalculate(self):
         # get all the inputs
@@ -379,7 +379,7 @@ class App(QDialog):
         data3 = results.strat3
 
         # print the results
-        # self.resultsBox.itemAt(0).widget()
+        table = self.resultsBox.itemAt(0).widget()
 
         # for strategy 1
         strat1 = QTableWidgetItem(data1.type)
@@ -391,14 +391,14 @@ class App(QDialog):
         div1 = QTableWidgetItem(str(round(data1.div,2)))
         treasury1 = QTableWidgetItem(str(round(data1.treasury,2)))
 
-        self.resultsBox.itemAt(0).widget().setHorizontalHeaderItem(0, strat1)
-        self.resultsBox.itemAt(0).widget().setItem(0,0, commission1)
-        self.resultsBox.itemAt(0).widget().setItem(1,0, taxes1)
-        self.resultsBox.itemAt(0).widget().setItem(2,0, treasury1)
-        self.resultsBox.itemAt(0).widget().setItem(3,0, div1)
-        self.resultsBox.itemAt(0).widget().setItem(4,0, pl1)
-        self.resultsBox.itemAt(0).widget().setItem(5,0, assets1)
-        self.resultsBox.itemAt(0).widget().setItem(6,0, cagr1)
+        table.setHorizontalHeaderItem(0, strat1)
+        table.setItem(0,0, commission1)
+        table.setItem(1,0, taxes1)
+        table.setItem(2,0, treasury1)
+        table.setItem(3,0, div1)
+        table.setItem(4,0, pl1)
+        table.setItem(5,0, assets1)
+        table.setItem(6,0, cagr1)
 
         # for strategy 2
         strat2 = QTableWidgetItem(data2.type)
@@ -410,14 +410,14 @@ class App(QDialog):
         div2 = QTableWidgetItem(str(round(data2.div,2)))
         treasury2 = QTableWidgetItem(str(round(data2.treasury,2)))
 
-        self.resultsBox.itemAt(0).widget().setHorizontalHeaderItem(1, strat2)
-        self.resultsBox.itemAt(0).widget().setItem(0,1, commission2)
-        self.resultsBox.itemAt(0).widget().setItem(1,1, taxes2)
-        self.resultsBox.itemAt(0).widget().setItem(2,1, treasury2)
-        self.resultsBox.itemAt(0).widget().setItem(3,1, div2)
-        self.resultsBox.itemAt(0).widget().setItem(4,1, pl2)
-        self.resultsBox.itemAt(0).widget().setItem(5,1, assets2)
-        self.resultsBox.itemAt(0).widget().setItem(6,1, cagr2)
+        table.setHorizontalHeaderItem(1, strat2)
+        table.setItem(0,1, commission2)
+        table.setItem(1,1, taxes2)
+        table.setItem(2,1, treasury2)
+        table.setItem(3,1, div2)
+        table.setItem(4,1, pl2)
+        table.setItem(5,1, assets2)
+        table.setItem(6,1, cagr2)
 
         # for strategy 3
         strat3 = QTableWidgetItem(data3.type)
@@ -429,14 +429,14 @@ class App(QDialog):
         div3 = QTableWidgetItem(str(round(data3.div,2)))
         treasury3 = QTableWidgetItem(str(round(data3.treasury,2)))
 
-        self.resultsBox.itemAt(0).widget().setHorizontalHeaderItem(2, strat3)
-        self.resultsBox.itemAt(0).widget().setItem(0,2, commission3)
-        self.resultsBox.itemAt(0).widget().setItem(1,2, taxes3)
-        self.resultsBox.itemAt(0).widget().setItem(2,2, treasury3)
-        self.resultsBox.itemAt(0).widget().setItem(3,2, div3)
-        self.resultsBox.itemAt(0).widget().setItem(4,2, pl3)
-        self.resultsBox.itemAt(0).widget().setItem(5,2, assets3)
-        self.resultsBox.itemAt(0).widget().setItem(6,2, cagr3)
+        table.setHorizontalHeaderItem(2, strat3)
+        table.setItem(0,2, commission3)
+        table.setItem(1,2, taxes3)
+        table.setItem(2,2, treasury3)
+        table.setItem(3,2, div3)
+        table.setItem(4,2, pl3)
+        table.setItem(5,2, assets3)
+        table.setItem(6,2, cagr3)
 
         # set the other basic info
         tickerBasics = "Ticker: " + ticker
