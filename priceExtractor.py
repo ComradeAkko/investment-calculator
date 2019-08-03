@@ -278,6 +278,12 @@ def newTickerDirectory():
 
 		if os.path.isfile(directoryPath + "\\amex.csv"):
 			os.remove(directoryPath + "\\" + "amex.csv")
+
+		if os.path.isfile(directoryPath + "\\etf.csv"):
+			os.remove(directoryPath + "\\" + "etf.csv")
+
+		if os.path.isfile(directoryPath + "\\ETFList.csv"):
+			os.remove(directoryPath + "\\" + "ETFList.csv")
 			
 		if os.path.isfile(directoryPath + "\\companylist.csv"):
 			os.remove(directoryPath + "\\companylist.csv")
@@ -302,8 +308,7 @@ def getTickerList():
 	profile.set_preference("browser.download.folderList", 2)
 	profile.set_preference("browser.download.manager.showWhenStarting",False)
 	profile.set_preference("browser.download.dir", directoryTick)
-	profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/csv")
-	profile.set_preference("browser.helperApps.neverAsk.saveToDisk","application/text")
+	profile.set_preference("browser.helperApps.neverAsk.saveToDisk","application/text, Application/ms-excel; charset=utf-8")
 
 	# set up the Firefox driver and set it so that it waits for elements to appear
 	driver = webdriver.Firefox(firefox_profile=profile)
@@ -312,8 +317,18 @@ def getTickerList():
 
 	# get the url for companies
 	url = "https://www.nasdaq.com/screening/company-list.aspx"
-	# open the link
-	driver.get(url)
+
+	# getting the URL and accounting for weird bugs that stall the driver
+	finished = 0
+	while finished == 0:
+		try:
+			print("loading new page... (may take a few seconds)")
+			driver.get(url)
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("page loaded")
 
 	#click the cookie button
 	finished = 0
@@ -371,17 +386,45 @@ def getTickerList():
 			time.sleep(5)
 	print("data extracted")
 
+	newURL = "https://www.nasdaq.com/etfs/list"
+
+	# getting the new URL and accounting for weird bugs that stall the driver
+	finished = 0
+	while finished == 0:
+		try:
+			print("loading new page... (may take a few seconds)")
+			driver.get(newURL)
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("page loaded")
+
+	# getting the data and accounting for weird bugs that occur occasionally
+	finished = 0
+	while finished == 0:
+		try:
+			print("extracting etf data...")
+			# click the csv button
+			etfButton = driver.find_element_by_xpath("//a[@href='https://www.nasdaq.com/investing/etfs/etf-finder-results.aspx?download=Yes']")
+			etfButton.click()
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("data extracted")
+
 	# rename the files
-	os.rename(directoryTick + "\\companylist.csv", directoryTick + "\\" + "nasdaq.csv")
-	os.rename(directoryTick + "\\companylist(1).csv", directoryTick + "\\" + "nyse.csv")
-	os.rename(directoryTick + "\\companylist(2).csv", directoryTick + "\\" + "amex.csv")
+	os.rename(directoryTick + "\\companylist.csv", directoryTick + "\\nasdaq.csv")
+	os.rename(directoryTick + "\\companylist(1).csv", directoryTick + "\\nyse.csv")
+	os.rename(directoryTick + "\\companylist(2).csv", directoryTick + "\\amex.csv")
+	os.rename(directoryTick + "\\ETFList.csv", directoryTick + "\\etf.csv")
 
 	# sort the data
 	sortAlpha(directoryTick + "\\" + "nasdaq.csv")
 	sortAlpha(directoryTick + "\\" + "nyse.csv")
 	sortAlpha(directoryTick + "\\" + "amex.csv")
+	sortAlpha(directoryTick + "\\" + "etf.csv")
 
 	# quitting the driver
 	driver.quit()
-
-getTickerList()
