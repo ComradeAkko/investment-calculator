@@ -150,6 +150,7 @@ def tickerExists(ticker):
     # if found, return true
     if idx != -1:
         return True
+    file.close()
 
     # open the nasdaq file and search for ticker
     file = open(nasdaqPath)
@@ -161,6 +162,7 @@ def tickerExists(ticker):
     # if found, return true
     if idx != -1:
         return True
+    file.close()
 
     # open the nasdaq file and search for ticker
     file = open(nysePath)
@@ -172,6 +174,8 @@ def tickerExists(ticker):
     # if found, return true
     if idx != -1:
         return True
+    file.close()
+    
 
     # open the etf file and search for ticker
     file = open(etfPath)
@@ -183,6 +187,8 @@ def tickerExists(ticker):
     # if found, return true
     if idx != -1:
         return True
+    file.close()
+    
     
     # if not found, return false
     return False
@@ -283,7 +289,7 @@ def getNoteYield(date, datapath):
     idx = binaryMonthSearch(data, 0, len(data)-1, currDate)
 
     # if the month exists
-    if idx =! -1:
+    if idx != -1:
         # get the rate
         rate = float(data[idx][1])
     else:

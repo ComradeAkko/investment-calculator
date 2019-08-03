@@ -4,7 +4,7 @@
 ## Objectives
 This project was created to determine whether certain investment strategies were more successful than others given a certain length of time, based on historical data.
 
-Pandas is already known to be a good data reader, but I want to try creating a data reader and analyzer from the ground up, so I won't be using it. See investmentStrat.md for more information regarding the investment strategies used in this program.
+Pandas is already known to be a good data reader, but I want to try creating a data reader and analyzer from the ground up, so I won't be using it. See `investmentStrat.md` for more information regarding the investment strategies used in this program.
 
 ## Requirements
 Python must be installed.

@@ -3,10 +3,13 @@
 import sys
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QPushButton, QWidget, 
         QVBoxLayout, QGroupBox, QHBoxLayout, QVBoxLayout, QLineEdit, QComboBox,
-        QDialog, QLabel, QTableWidget, QTabWidget, QTextEdit, QTableWidgetItem)
+        QDialog, QLabel, QTableWidget, QTabWidget, QTextEdit, QTableWidgetItem,
+        QCheckBox)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 from investCalc import *
+from priceExtractor import *
+from helperFunc import *
 
 # based on Python Tutorials @ https://build-system.fman.io/pyqt5-tutorial
 class App(QDialog):
@@ -71,7 +74,6 @@ class App(QDialog):
 
     # creates the tabs
     def createTabs(self, layout):
-        self.tabBoxes = QHBoxLayout()
 
         self.tabWidget = QTabWidget()
 
@@ -79,6 +81,37 @@ class App(QDialog):
         tab1.setLayout(layout)
 
         tab2 = QWidget()
+        guideLabel = QLabel("Check boxes for data to be updated:")
+        stockLineEdit = QLineEdit("")
+        stockCheck = QCheckBox("Ticker: ")
+
+        notesCheck = QCheckBox("Treasury Notes")
+        
+        tickerCheck = QCheckBox("Ticker List")
+
+        refreshButton = QPushButton("Update Data")
+        refreshButton.clicked.connect(self.clickRefresh)
+
+        errorMessage = QLabel("")
+
+        tab2Box = QVBoxLayout()
+        tab2miniBox = QHBoxLayout()
+
+        tab2miniBox.addWidget(stockCheck)
+        tab2miniBox.addWidget(stockLineEdit)
+
+        tab2Box.addWidget(guideLabel)
+        tab2Box.addLayout(tab2miniBox)
+        tab2Box.addWidget(notesCheck)
+        tab2Box.addWidget(tickerCheck)
+        tab2Box.addWidget(refreshButton)
+        tab2Box.addWidget(errorMessage)
+
+
+        tab2.setLayout(tab2Box)
+
+
+        tab3 = QWidget()
         inveStratTextEdit = QTextEdit()
         inveStratTextEdit.setPlainText("Investment strategies\n"
                                     "by ComradeAkko\n\n"
@@ -129,10 +162,11 @@ class App(QDialog):
         tab3hbox = QHBoxLayout()
         tab3hbox.setContentsMargins(5, 5, 5, 5)
         tab3hbox.addWidget(inveStratTextEdit)
-        tab2.setLayout(tab3hbox)
+        tab3.setLayout(tab3hbox)
 
         self.tabWidget.addTab(tab1, "&Main")
-        self.tabWidget.addTab(tab2, "&Investment Strategies")
+        self.tabWidget.addTab(tab2, "&Updating Data")
+        self.tabWidget.addTab(tab3, "&Investment Strategies")
     
     # creates a ticker box
     def createTickerBoxes(self):
@@ -488,6 +522,32 @@ class App(QDialog):
         else:
             error = "Error: One or more of the number inputs do not contain valid numbers, please try again."
             self.errorBox.itemAt(0).widget().setText(error)
+    
+    # what to do when the refresh button is pushed
+    def clickRefresh(self):
+        ticker = self.tabWidget.widget(1).layout().itemAt(1).layout().itemAt(1).widget().text()
+        stockBool = self.tabWidget.widget(1).layout().itemAt(1).layout().itemAt(0).widget().isChecked()
+        notesBool = self.tabWidget.widget(1).layout().itemAt(2).widget().isChecked()
+        tickerBool = self.tabWidget.widget(1).layout().itemAt(3).widget().isChecked()
+
+        # if the stock check box is checked
+        if stockBool:
+            # if the ticker exists
+            if tickerExists(ticker):
+                getStockData(ticker)
+                if notesBool:
+                    getTreasuryData()
+                if tickerBool:
+                    getTickerList()
+                self.tabWidget.widget(1).layout().itemAt(5).widget().setText("Update done.")
+            else:
+                self.tabWidget.widget(1).layout().itemAt(5).widget().setText("Error: ticker does not exist")
+        else:
+            if notesBool:
+                getTreasuryData()
+            if tickerBool:
+                getTickerList()
+            self.tabWidget.widget(1).layout().itemAt(5).widget().setText("Update done.")
             
         
 
