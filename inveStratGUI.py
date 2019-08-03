@@ -30,6 +30,7 @@ class App(QDialog):
         self.createResultsBox()
         self.createExtraBasicBox()
         self.createExtraDateBox()
+        self.createErrorBox()
 
         # create and organize the layout
         mainLayout = QGridLayout()
@@ -42,9 +43,10 @@ class App(QDialog):
         mainLayout.addLayout(self.aigrBox, 6, 0)
         mainLayout.addLayout(self.investFracBox, 7, 0)
         mainLayout.addLayout(self.calculateBox, 8, 0)
+        mainLayout.addLayout(self.errorBox, 9, 0)
         mainLayout.addLayout(self.resultsBox, 0, 1, 7, 10)
-        mainLayout.addLayout(self.extraBasicBox, 7, 1)
-        mainLayout.addLayout(self.extraDateBox, 8, 1)
+        mainLayout.addLayout(self.extraBasicBox, 8, 1)
+        mainLayout.addLayout(self.extraDateBox, 9, 1)
 
         mainLayout.setColumnStretch(0,1)
         mainLayout.setColumnStretch(1,10)
@@ -352,6 +354,11 @@ class App(QDialog):
         self.extraDateBox.addWidget(basicStartDate)
         self.extraDateBox.addWidget(basicEndDate)
 
+    # create error boxes that display errors
+    def createErrorBox(self):
+        self.errorBox = QHBoxLayout()
+        errorLabel = QLabel(" ")
+        self.errorBox.addWidget(errorLabel)
 
     # what to do when calculate button is pushed
     @pyqtSlot()
@@ -363,102 +370,107 @@ class App(QDialog):
         strat1 = self.stratBoxes.itemAt(1).widget().currentText()
         strat2 = self.stratBoxes.itemAt(4).widget().currentText()
         strat3 = self.stratBoxes.itemAt(7).widget().currentText()
-        capital = float(self.initialBox.itemAt(1).widget().text())
-        sma = int(self.staticNumbersBoxes.itemAt(1).widget().text())
-        commission = float(self.staticNumbersBoxes.itemAt(4).widget().text())
-        income = float(self.incomeBox.itemAt(1).widget().text())
-        aigr = float(self.aigrBox.itemAt(1).widget().text())
-        invesFrac = float(self.investFracBox.itemAt(1).widget().text())
 
-        # get the results
-        results = investCalc(ticker, startDate, endDate, capital, income, strat1, strat2, strat3, sma, commission, invesFrac, aigr)
+        # make sure the values are all numbers
+        numbers = True
+        try:
+            capital = float(self.initialBox.itemAt(1).widget().text())
+            sma = int(self.staticNumbersBoxes.itemAt(1).widget().text())
+            commission = float(self.staticNumbersBoxes.itemAt(4).widget().text())
+            income = float(self.incomeBox.itemAt(1).widget().text())
+            aigr = float(self.aigrBox.itemAt(1).widget().text())
+            invesFrac = float(self.investFracBox.itemAt(1).widget().text())
+        except ValueError:
+            numbers = False
+        
+        if numbers:
+            # get the results
+            results = investCalc(ticker, startDate, endDate, capital, income, strat1, strat2, strat3, sma, commission, invesFrac, aigr)
 
-        # sort out the data
-        data1 = results.strat1
-        data2 = results.strat2
-        data3 = results.strat3
+            # sort out the data
+            data1 = results.strat1
+            data2 = results.strat2
+            data3 = results.strat3
 
-        # print the results
-        table = self.resultsBox.itemAt(0).widget()
+            # print the results
+            table = self.resultsBox.itemAt(0).widget()
 
-        # for strategy 1
-        strat1 = QTableWidgetItem(data1.type)
-        assets1 = QTableWidgetItem(str(round(data1.assets,2)))
-        cagr1 = QTableWidgetItem(str(round(data1.cagr,4)))
-        taxes1 = QTableWidgetItem(str(round(data1.taxes,2)))
-        commission1 = QTableWidgetItem(str(round(data1.comissions,2)))
-        pl1 = QTableWidgetItem(str(round(data1.pl,2)))
-        div1 = QTableWidgetItem(str(round(data1.div,2)))
-        treasury1 = QTableWidgetItem(str(round(data1.treasury,2)))
+            # for strategy 1
+            strat1 = QTableWidgetItem(data1.type)
+            assets1 = QTableWidgetItem(str(round(data1.assets,2)))
+            cagr1 = QTableWidgetItem(str(round(data1.cagr,4)))
+            taxes1 = QTableWidgetItem(str(round(data1.taxes,2)))
+            commission1 = QTableWidgetItem(str(round(data1.comissions,2)))
+            pl1 = QTableWidgetItem(str(round(data1.pl,2)))
+            div1 = QTableWidgetItem(str(round(data1.div,2)))
+            treasury1 = QTableWidgetItem(str(round(data1.treasury,2)))
 
-        table.setHorizontalHeaderItem(0, strat1)
-        table.setItem(0,0, commission1)
-        table.setItem(1,0, taxes1)
-        table.setItem(2,0, treasury1)
-        table.setItem(3,0, div1)
-        table.setItem(4,0, pl1)
-        table.setItem(5,0, assets1)
-        table.setItem(6,0, cagr1)
+            table.setHorizontalHeaderItem(0, strat1)
+            table.setItem(0,0, commission1)
+            table.setItem(1,0, taxes1)
+            table.setItem(2,0, treasury1)
+            table.setItem(3,0, div1)
+            table.setItem(4,0, pl1)
+            table.setItem(5,0, assets1)
+            table.setItem(6,0, cagr1)
 
-        # for strategy 2
-        strat2 = QTableWidgetItem(data2.type)
-        assets2 = QTableWidgetItem(str(round(data2.assets,2)))
-        cagr2 = QTableWidgetItem(str(round(data2.cagr,4)))
-        taxes2 = QTableWidgetItem(str(round(data2.taxes,2)))
-        commission2 = QTableWidgetItem(str(round(data2.comissions,2)))
-        pl2 = QTableWidgetItem(str(round(data2.pl,2)))
-        div2 = QTableWidgetItem(str(round(data2.div,2)))
-        treasury2 = QTableWidgetItem(str(round(data2.treasury,2)))
+            # for strategy 2
+            strat2 = QTableWidgetItem(data2.type)
+            assets2 = QTableWidgetItem(str(round(data2.assets,2)))
+            cagr2 = QTableWidgetItem(str(round(data2.cagr,4)))
+            taxes2 = QTableWidgetItem(str(round(data2.taxes,2)))
+            commission2 = QTableWidgetItem(str(round(data2.comissions,2)))
+            pl2 = QTableWidgetItem(str(round(data2.pl,2)))
+            div2 = QTableWidgetItem(str(round(data2.div,2)))
+            treasury2 = QTableWidgetItem(str(round(data2.treasury,2)))
 
-        table.setHorizontalHeaderItem(1, strat2)
-        table.setItem(0,1, commission2)
-        table.setItem(1,1, taxes2)
-        table.setItem(2,1, treasury2)
-        table.setItem(3,1, div2)
-        table.setItem(4,1, pl2)
-        table.setItem(5,1, assets2)
-        table.setItem(6,1, cagr2)
+            table.setHorizontalHeaderItem(1, strat2)
+            table.setItem(0,1, commission2)
+            table.setItem(1,1, taxes2)
+            table.setItem(2,1, treasury2)
+            table.setItem(3,1, div2)
+            table.setItem(4,1, pl2)
+            table.setItem(5,1, assets2)
+            table.setItem(6,1, cagr2)
 
-        # for strategy 3
-        strat3 = QTableWidgetItem(data3.type)
-        assets3 = QTableWidgetItem(str(round(data3.assets,2)))
-        cagr3 = QTableWidgetItem(str(round(data3.cagr,4)))
-        taxes3 = QTableWidgetItem(str(round(data3.taxes,2)))
-        commission3 = QTableWidgetItem(str(round(data3.comissions,2)))
-        pl3 = QTableWidgetItem(str(round(data3.pl,2)))
-        div3 = QTableWidgetItem(str(round(data3.div,2)))
-        treasury3 = QTableWidgetItem(str(round(data3.treasury,2)))
+            # for strategy 3
+            strat3 = QTableWidgetItem(data3.type)
+            assets3 = QTableWidgetItem(str(round(data3.assets,2)))
+            cagr3 = QTableWidgetItem(str(round(data3.cagr,4)))
+            taxes3 = QTableWidgetItem(str(round(data3.taxes,2)))
+            commission3 = QTableWidgetItem(str(round(data3.comissions,2)))
+            pl3 = QTableWidgetItem(str(round(data3.pl,2)))
+            div3 = QTableWidgetItem(str(round(data3.div,2)))
+            treasury3 = QTableWidgetItem(str(round(data3.treasury,2)))
 
-        table.setHorizontalHeaderItem(2, strat3)
-        table.setItem(0,2, commission3)
-        table.setItem(1,2, taxes3)
-        table.setItem(2,2, treasury3)
-        table.setItem(3,2, div3)
-        table.setItem(4,2, pl3)
-        table.setItem(5,2, assets3)
-        table.setItem(6,2, cagr3)
+            table.setHorizontalHeaderItem(2, strat3)
+            table.setItem(0,2, commission3)
+            table.setItem(1,2, taxes3)
+            table.setItem(2,2, treasury3)
+            table.setItem(3,2, div3)
+            table.setItem(4,2, pl3)
+            table.setItem(5,2, assets3)
+            table.setItem(6,2, cagr3)
 
-        # set the other basic info
-        tickerBasics = "Ticker: " + ticker
-        initialBasics = "Initial Capital: " + str(capital)
+            # set the other basic info
+            tickerBasics = "Ticker: " + ticker
+            initialBasics = "Initial Capital: " + str(capital)
 
-        startBasics = "Start Date: " + data1.iDate
-        endBasics = "End Date: " + data1.pDate
+            startBasics = "Start Date: " + data1.iDate
+            endBasics = "End Date: " + data1.pDate
 
-        self.extraBasicBox.itemAt(0).widget().setText(tickerBasics)
-        self.extraBasicBox.itemAt(1).widget().setText(initialBasics)
-        self.extraDateBox.itemAt(0).widget().setText(startBasics)
-        self.extraDateBox.itemAt(1).widget().setText(endBasics)
+            self.extraBasicBox.itemAt(0).widget().setText(tickerBasics)
+            self.extraBasicBox.itemAt(1).widget().setText(initialBasics)
+            self.extraDateBox.itemAt(0).widget().setText(startBasics)
+            self.extraDateBox.itemAt(1).widget().setText(endBasics)
+
+        else:
+            error = "Error: One or more of the number inputs do not contain valid numbers, please try again."
+            self.errorBox.itemAt(0).widget().setText(error)
+            
         
 
-
-
-
-
-
-
-
-    
+  
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = App()
