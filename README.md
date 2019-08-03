@@ -20,5 +20,6 @@ I'm definitely not by any means an experienced investor or a coder, so my result
 - Treasury note calculation may be skewed as I may not properly know how fixed income yield works.
 - Historical taxation data is not used. Instead the 2019 tax bracket is used.
 - Historical capital gains tax data is also not used. The 2019 capital gains tax data is used.
+- If there is no bond yield data for a specific month, the bond yield of that note lot will be zero.
 - Bond income is also not taxed in this model.
 - I am an amateur programmer so there may a multitude of bugs in the program that may come out of nowhere.

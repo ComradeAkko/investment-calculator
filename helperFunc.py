@@ -282,8 +282,13 @@ def getNoteYield(date, datapath):
     # search for the index of the date
     idx = binaryMonthSearch(data, 0, len(data)-1, currDate)
 
-    # get the rate
-    rate = float(data[idx][1])
+    # if the month exists
+    if idx =! -1:
+        # get the rate
+        rate = float(data[idx][1])
+    else:
+        # return zero
+        rate = 0
 
     # close the file
     file.close()
