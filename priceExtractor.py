@@ -72,12 +72,15 @@ def sortData(filePath):
 
 	# sort the data
 	dataSorted = sorted(data, key=lambda day: datetime.strptime(day[0], "%Y-%m-%d"),reverse = False)
-	
+
 	# writes in the new sorted data
 	with open(filePath, newline ='', mode = 'w') as newData:
 		dataWriter = csv.writer(newData, delimiter = ',')
 		dataWriter.writerow(row)
-		dataWriter.writerows(dataSorted)
+		for row in dataSorted:
+			# if the data is not null write it down
+			if row[0] != "null" or row[1] != "null" or row[2] != "null" or row[3] != "null" or row[4] != "null" or row[5] != "null" or row[6] != "null":
+				dataWriter.writerow(row)
 
 # sorts data based on alphabet
 def sortAlpha(filePath):
