@@ -62,6 +62,33 @@ def binaryMonthSearch(array, left, right, date):
         # Date is not present in the array 
         return -1
 
+# binary search function for finding tickers
+def binaryTickerSearch(array, left, right, ticker):
+    # Check base case 
+    if right >= left: 
+        mid = math.floor(left + (right - left)/2)
+
+        # get the mid symbol in datetime form
+        midSymbol = array[mid][0]
+  
+        # If the specified symbol is present at the middle itself 
+        if midSymbol == ticker: 
+            return mid 
+          
+        # If the specified symbol is earlier than mid, then it  
+        # can only be present in left subarray 
+        elif midSymbol > ticker: 
+            return binaryTickerSearch(array, left, mid-1, ticker) 
+  
+        # Else the symbol can only be present  
+        # in right subarray 
+        else: 
+            return binaryTickerSearch(array, mid + 1, right, ticker) 
+  
+    else: 
+        # Date is not present in the array 
+        return -1
+
 # searches for date via binary search.
 # If the binary search doesn't yield the desired date,
 # The closest date's index will be returned
@@ -104,6 +131,67 @@ def binaryClosestDateSearch(array, left, right, date):
         else:
             return right
 
+# returns a boolean to see whether the ticker exists
+def tickerExists(ticker):
+    directoryPath = tickerPath = os.getcwd() + "\\ticker\\"
+
+    amexPath = directoryPath + "amex.csv"
+    nasdaqPath = directoryPath + "nasdaq.csv"
+    nysePath = directoryPath + "nyse.csv"
+    etfPath = directoryPath + "etf.csv"
+
+    # open the amex file and search for ticker
+    file = open(amexPath)
+    data = csv.reader(file)
+    next(data)
+    data = list(data)
+    idx = binaryTickerSearch(data, 0, len(data)-1, ticker)
+
+    # if found, return true
+    if idx != -1:
+        return True
+    file.close()
+
+    # open the nasdaq file and search for ticker
+    file = open(nasdaqPath)
+    data = csv.reader(file)
+    next(data)
+    data = list(data)
+    idx = binaryTickerSearch(data, 0, len(data)-1, ticker)
+
+    # if found, return true
+    if idx != -1:
+        return True
+    file.close()
+
+    # open the nasdaq file and search for ticker
+    file = open(nysePath)
+    data = csv.reader(file)
+    next(data)
+    data = list(data)
+    idx = binaryTickerSearch(data, 0, len(data)-1, ticker)
+
+    # if found, return true
+    if idx != -1:
+        return True
+    file.close()
+    
+
+    # open the etf file and search for ticker
+    file = open(etfPath)
+    data = csv.reader(file)
+    next(data)
+    data = list(data)
+    idx = binaryTickerSearch(data, 0, len(data)-1, ticker)
+
+    # if found, return true
+    if idx != -1:
+        return True
+    file.close()
+    
+    
+    # if not found, return false
+    return False
 
 def dataExists(datePath, limit = 1):
     # opening the file
@@ -200,8 +288,13 @@ def getNoteYield(date, datapath):
     # search for the index of the date
     idx = binaryMonthSearch(data, 0, len(data)-1, currDate)
 
-    # get the rate
-    rate = float(data[idx][1])
+    # if the month exists
+    if idx != -1:
+        # get the rate
+        rate = float(data[idx][1])
+    else:
+        # return zero
+        rate = 0
 
     # close the file
     file.close()
@@ -302,7 +395,13 @@ def movingAverage(period, date, dataPath):
     # calculate the current sum
     sum = 0
     for row in movingAverageRows:
-        sum += float(row[4])
+        try:
+            sum += float(row[4])
+        except ValueError:
+            # do nothing
+            print("wot")
+            sum += 0
+            period -= 1
     
     # get the average
     SMA = sum/period
@@ -329,7 +428,12 @@ def getStartDate(dataPath, startDate, baseSMA):
 
     # convert the start date into datetime format
     if startDate != "MAX":
-        startDate = datetime.strptime(startDate, "%m/%d/%Y")
+        try:
+            startDate = datetime.strptime(endDate, "%m/%d/%Y")
+        except ValueError:
+            return False
+        except NameError:
+            return False
 
     # if the start date is labelled max
     if startDate == "MAX":
@@ -369,7 +473,12 @@ def getEndDate(dataPath, endDate, baseSMA):
 
     # convert the end date into datetime format
     if endDate != "MAX":
-        endDate = datetime.strptime(endDate, "%m/%d/%Y")
+        try:
+            endDate = datetime.strptime(endDate, "%m/%d/%Y")
+        except ValueError:
+            return False
+        except NameError:
+            return False
     
     if endDate == "MAX":
         # set the end date with the latest possible date

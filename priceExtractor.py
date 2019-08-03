@@ -79,6 +79,23 @@ def sortData(filePath):
 		dataWriter.writerow(row)
 		dataWriter.writerows(dataSorted)
 
+# sorts data based on alphabet
+def sortAlpha(filePath):
+	# open up the file for reading
+	data = csv.reader(open(filePath), delimiter=',')
+	
+	# skip the header
+	row = next(data)
+
+	# sort the data
+	dataSorted = sorted(data, key=lambda alphabet: alphabet[0] ,reverse = False)
+	
+	# writes in the new sorted data
+	with open(filePath, newline ='', mode = 'w') as newData:
+		dataWriter = csv.writer(newData, delimiter = ',')
+		dataWriter.writerow(row)
+		dataWriter.writerows(dataSorted)
+
 # gets historical stock data including prices, dividends, and stock splits
 def getStockData(ticker):
     # concatenate the url for Yahoo Finance
@@ -240,6 +257,174 @@ def getTreasuryData():
 
 	# sort data
 	sortData(directoryT + "\\" +  "notes.csv")
+
+	# quitting the driver
+	driver.quit()
+
+def newTickerDirectory():
+	directoryPath = os.getcwd() + "\\ticker"
+
+	#if the directory doesn't exist, make it
+	if os.path.exists(directoryPath) == False:
+		os.mkdir(directoryPath)
+
+	# if the directory exists, delete the previous data to make way for new data
+	else:
+		if os.path.isfile(directoryPath + "\\nasdaq.csv"):
+			os.remove(directoryPath + "\\" + "nasdaq.csv")
+
+		if os.path.isfile(directoryPath + "\\nyse.csv"):
+			os.remove(directoryPath + "\\" + "nyse.csv")
+
+		if os.path.isfile(directoryPath + "\\amex.csv"):
+			os.remove(directoryPath + "\\" + "amex.csv")
+
+		if os.path.isfile(directoryPath + "\\etf.csv"):
+			os.remove(directoryPath + "\\" + "etf.csv")
+
+		if os.path.isfile(directoryPath + "\\ETFList.csv"):
+			os.remove(directoryPath + "\\" + "ETFList.csv")
+			
+		if os.path.isfile(directoryPath + "\\companylist.csv"):
+			os.remove(directoryPath + "\\companylist.csv")
+
+		if os.path.isfile(directoryPath + "\\companylist(1).csv"):
+			os.remove(directoryPath + "\\companylist(1).csv")
+
+		if os.path.isfile(directoryPath + "\\companylist(2).csv"):
+			os.remove(directoryPath + "\\companylist(2).csv")
+		
+	return directoryPath
+
+
+# gets the list of tickers on the NYSE markets 
+def getTickerList():
+
+	directoryTick = newTickerDirectory()
+
+	# set downloading preferences
+	profile = webdriver.FirefoxProfile()
+
+	profile.set_preference("browser.download.folderList", 2)
+	profile.set_preference("browser.download.manager.showWhenStarting",False)
+	profile.set_preference("browser.download.dir", directoryTick)
+	profile.set_preference("browser.helperApps.neverAsk.saveToDisk","application/text, Application/ms-excel; charset=utf-8")
+
+	# set up the Firefox driver and set it so that it waits for elements to appear
+	driver = webdriver.Firefox(firefox_profile=profile)
+	driver.set_page_load_timeout(15)
+	driver.implicitly_wait(5)
+
+	# get the url for companies
+	url = "https://www.nasdaq.com/screening/company-list.aspx"
+
+	# getting the URL and accounting for weird bugs that stall the driver
+	finished = 0
+	while finished == 0:
+		try:
+			print("loading new page... (may take a few seconds)")
+			driver.get(url)
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("page loaded")
+
+	#click the cookie button
+	finished = 0
+	while finished == 0:
+		try:
+			print("clicking the cookie button...")
+			# click the csv button
+			cookieButton = driver.find_element_by_xpath("//a[@id='cookieConsentOK']")
+			cookieButton.click()
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("cookie button clicked")
+
+	# getting the data and accounting for weird bugs that occur occasionally
+	finished = 0
+	while finished == 0:
+		try:
+			print("extracting NASDAQ data...")
+			# click the csv button
+			nasdaqButton = driver.find_element_by_xpath("//a[@href='https://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nasdaq&render=download']")
+			nasdaqButton.click()
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("data extracted")
+
+	# getting the data and accounting for weird bugs that occur occasionally
+	finished = 0
+	while finished == 0:
+		try:
+			print("extracting NYSE data...")
+			# click the csv button
+			nyseButton = driver.find_element_by_xpath("//a[@href='https://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nyse&render=download']")
+			nyseButton.click()
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("data extracted")
+
+	# getting the data and accounting for weird bugs that occur occasionally
+	finished = 0
+	while finished == 0:
+		try:
+			print("extracting AMEX data...")
+			# click the csv button
+			amexButton = driver.find_element_by_xpath("//a[@href='https://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=amex&render=download']")
+			amexButton.click()
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("data extracted")
+
+	newURL = "https://www.nasdaq.com/etfs/list"
+
+	# getting the new URL and accounting for weird bugs that stall the driver
+	finished = 0
+	while finished == 0:
+		try:
+			print("loading new page... (may take a few seconds)")
+			driver.get(newURL)
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("page loaded")
+
+	# getting the data and accounting for weird bugs that occur occasionally
+	finished = 0
+	while finished == 0:
+		try:
+			print("extracting etf data...")
+			# click the csv button
+			etfButton = driver.find_element_by_xpath("//a[@href='https://www.nasdaq.com/investing/etfs/etf-finder-results.aspx?download=Yes']")
+			etfButton.click()
+			finished = 1
+		except:
+			print("trying again...")
+			time.sleep(5)
+	print("data extracted")
+
+	# rename the files
+	os.rename(directoryTick + "\\companylist.csv", directoryTick + "\\nasdaq.csv")
+	os.rename(directoryTick + "\\companylist(1).csv", directoryTick + "\\nyse.csv")
+	os.rename(directoryTick + "\\companylist(2).csv", directoryTick + "\\amex.csv")
+	os.rename(directoryTick + "\\ETFList.csv", directoryTick + "\\etf.csv")
+
+	# sort the data
+	sortAlpha(directoryTick + "\\" + "nasdaq.csv")
+	sortAlpha(directoryTick + "\\" + "nyse.csv")
+	sortAlpha(directoryTick + "\\" + "amex.csv")
+	sortAlpha(directoryTick + "\\" + "etf.csv")
 
 	# quitting the driver
 	driver.quit()

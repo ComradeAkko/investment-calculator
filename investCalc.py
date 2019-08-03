@@ -17,6 +17,7 @@ class Result:
         self.strat1 = 0
         self.strat2 = 0
         self.strat3 = 0
+        self.income = 0
         self.errorBoo = False
         self.errorMess = "nothing"
 
@@ -34,6 +35,7 @@ class Data:
         self.treasury = 0
         self.iDate = 0
         self.pDate = 0
+        self.income = 0
 
 # records the data for each purchase of the stock
 class Slot:
@@ -133,6 +135,9 @@ def BH(ticker, startDate, endDate, cash, income, baseSMA, commission):
 
     # record the last date
     data.pDate = prices[endIDX][0]
+
+    # record the final income
+    data.income = income
 
     # close file
     priceF.close()
@@ -358,6 +363,9 @@ def MT(ticker, startDate, endDate, cash, income, baseSMA, commission):
     # record the last date
     data.pDate = prices[endIDX][0]
 
+    # record the final income
+    data.income = income
+
     # close file
     priceF.close()
 
@@ -582,6 +590,9 @@ def GX(ticker, startDate, endDate, cash, income, baseSMA, commission):
     # record the last date
     data.pDate = prices[endIDX][0]
 
+    # record the final income
+    data.income = income
+
     # close file
     priceF.close()
 
@@ -747,6 +758,9 @@ def DCA(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, inv
     
     # record the last date
     data.pDate = prices[endIDX][0]
+
+    # record the final income
+    data.income = income
 
     # close file
     priceF.close()
@@ -1067,6 +1081,9 @@ def PMT(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, inv
     
     # record the last date
     data.pDate = prices[endIDX][0]
+
+    # record the final income
+    data.income = income
 
     # close file
     priceF.close()
@@ -1389,6 +1406,9 @@ def DMT(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, inv
     # record the last date
     data.pDate = prices[endIDX][0]
 
+    # record the final income
+    data.income = income
+
     # close file
     priceF.close()
 
@@ -1709,6 +1729,9 @@ def GPM(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, inv
     
     # record the last date
     data.pDate = prices[endIDX][0]
+
+    # record the final income
+    data.income = income
 
     # close file
     priceF.close()
@@ -2033,6 +2056,9 @@ def GDM(ticker, startDate, endDate, cash, income, baseSMA, commission, aigr, inv
     # record the last date
     data.pDate = prices[endIDX][0]
 
+    # record the final income
+    data.income = income
+
     # close file
     priceF.close()
 
@@ -2132,14 +2158,57 @@ def printResults3(ticker, data1, data2, data3):
 #                   Decimal should be inputted. (i.e. .02 for 2%, .015 for 1.5%)
 
 def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, strat3, baseSMA = 200, commission = 5, investFrac = 0, aigr = 0):
+    # initialize the results
+    results = Result()
+
+    # turn ticker into upper case
+    ticker = ticker.upper()
+    results.ticker = ticker
+
     stockPath = os.getcwd() + "\\stocks\\" + ticker + "\\" + ticker
     notesPath = os.getcwd() + "\\notes\\notes.csv"
+    tickerPath = os.getcwd() + "\\ticker\\"
 
-    # make sure the dataset actually exists
-    if os.path.isfile(stockPath + "_split.csv") == False or os.path.isfile(stockPath + "_price.csv") == False or os.path.isfile(stockPath + "_dividend.csv") == False:
-        getStockData(ticker)
+    # make sure the initial capital is greater than zero
+    if initial <= 0 or baseSMA <= 0:
+        results.errorBoo = True
+        results.errorMess = "Initial capital and/or baseSMA must be greater than zero"
+        return results
+    
+    # make sure the income is not negative
+    if income < 0:
+        results.errorBoo = True
+        results.errorMess = "Income cannot be negative"
+        return results
+
+    # make sure the investfrac is a decimal between zero and one
+    if investFrac < 0 or investFrac > 1:
+        results.errorBoo = True
+        results.errorMess = "The fraction of income reserved for investing must not be beyond 0.0 and 1.0"
+        return results
+
+    # make sure the aigr is not lesser than -1.0
+    if aigr < -1:
+        results.errorBoo = True
+        results.errorMess = "The annual income growth rate must not be lesser than -1.0"
+        return results
+
+
+    # make sure we have the files
+    if os.path.isfile(tickerPath + "nasdaq.csv") == False or os.path.isfile(tickerPath + "nyse.csv") == False or os.path.isfile(tickerPath + "amex.csv") == False or  os.path.isfile(tickerPath + "etf.csv") == False:
+        getTickerList()
     if os.path.isfile(notesPath) == False:
         getTreasuryData()
+
+    # make sure the ticker exists
+    if tickerExists(ticker):
+        if os.path.isfile(stockPath + "_split.csv") == False or os.path.isfile(stockPath + "_price.csv") == False or os.path.isfile(stockPath + "_dividend.csv") == False:
+            getStockData(ticker)
+    # if the ticker does not exist, return error
+    else:
+        results.errorBoo = True
+        results.errorMess = "Ticker does not exist in AMEX, ETFList(NASDAQ), NASDAQ, and NYSE"
+        return results
     
     # getting the csv file
     stockPricePath = stockPath + "_price.csv"
@@ -2148,7 +2217,16 @@ def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, stra
     if dataExists(stockPricePath, baseSMA):
         # get the start and end dates
         startDate = getStartDate(stockPricePath, startDate, baseSMA)
+        if startDate == False:
+            results.errorBoo = True
+            results.errorMess = "Start date is invalid"
+            return results
+
         endDate = getEndDate(stockPricePath, endDate, baseSMA)
+        if endDate == False:
+            results.errorBoo = True
+            results.errorMess = "End date is invalid"
+            return results
 
         # if the startDate is properly earlier than the endDate
         if startDate < endDate:
@@ -2265,44 +2343,36 @@ def investCalc(ticker, startDate, endDate, initial, income, strat1, strat2, stra
 
             # return the results
             if found1 and found2:
-                if found3:
-                    results = Result()
-                    results.strat1 = data1
-                    results.strat2 = data2
+                results.income = data1.income
+                results.ticker = ticker
+                results.strat1 = data1
+                results.strat2 = data2
+                
+                if found3:                 
                     results.strat3 = data3
-                    results.ticker = ticker
-
-                else:
-                    results = Result()
-                    results.strat1 = data1
-                    results.strat2 = data2
-                    results.ticker = ticker
 
                 return results
 
             else:
                 if found1 == False and found2 == False:
-                    print("First two strategies do not exist, please input at least two valid strategies")
+                    results.errorBoo = True
+                    results.errorMess = "First two strategies do not exist, please input at least two valid strategies"
+                    return results
                 elif found1 == False:
-                    print("The first strategy does not exist, please input valid strategies")
+                    results.errorBoo = True
+                    results.errorMess = "The first strategy does not exist, please input valid strategies"
+                    return results
+
                 else:
-                    print("The second strategy does not exist, please input valid strategies")
+                    results.errorBoo = True
+                    results.errorMess = "The second strategy does not exist, please input valid strategies"
+                    return results
         else:
-            print("Please make sure the start date is earlier than the end date")
+            results.errorBoo = True
+            results.errorMess = "Please make sure the start date is earlier than the end date"
+            return results
 
     else:
-        print("Stock data does not have enough data points for this baseSMA")
-
-    
-
-
-
-
-# calculate buying and selling
-
-# disclaimer about how the current model doesn't use historical data on tax rates
-# disclaimer about how the current model doesn't use historical capital gains tax rates
-# disclaimer about how the current model doesn't possibly use accurate bonds information and handling
-# disclaimer about how bond income is not taxed
-
-# investCalc("EEM", "1/20/2008", "5/1/2019", 100000, 100000, "DCA", "DMT", " ", 200, 5, .5, .02)
+        results.errorBoo = True
+        results.errorMess = "Stock data does not have enough data points for this baseSMA"
+        return results

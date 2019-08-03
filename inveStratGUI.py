@@ -3,10 +3,13 @@
 import sys
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QPushButton, QWidget, 
         QVBoxLayout, QGroupBox, QHBoxLayout, QVBoxLayout, QLineEdit, QComboBox,
-        QDialog, QLabel, QTableWidget, QTabWidget, QTextEdit, QTableWidgetItem)
+        QDialog, QLabel, QTableWidget, QTabWidget, QTextEdit, QTableWidgetItem,
+        QCheckBox)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 from investCalc import *
+from priceExtractor import *
+from helperFunc import *
 
 # based on Python Tutorials @ https://build-system.fman.io/pyqt5-tutorial
 class App(QDialog):
@@ -30,6 +33,8 @@ class App(QDialog):
         self.createResultsBox()
         self.createExtraBasicBox()
         self.createExtraDateBox()
+        self.createErrorBox()
+        self.createFinalIncomeBox()
 
         # create and organize the layout
         mainLayout = QGridLayout()
@@ -42,9 +47,11 @@ class App(QDialog):
         mainLayout.addLayout(self.aigrBox, 6, 0)
         mainLayout.addLayout(self.investFracBox, 7, 0)
         mainLayout.addLayout(self.calculateBox, 8, 0)
+        mainLayout.addLayout(self.errorBox, 9, 0)
         mainLayout.addLayout(self.resultsBox, 0, 1, 7, 10)
         mainLayout.addLayout(self.extraBasicBox, 7, 1)
         mainLayout.addLayout(self.extraDateBox, 8, 1)
+        mainLayout.addLayout(self.finalIncomeBox, 9, 1)
 
         mainLayout.setColumnStretch(0,1)
         mainLayout.setColumnStretch(1,10)
@@ -67,7 +74,6 @@ class App(QDialog):
 
     # creates the tabs
     def createTabs(self, layout):
-        self.tabBoxes = QHBoxLayout()
 
         self.tabWidget = QTabWidget()
 
@@ -75,6 +81,37 @@ class App(QDialog):
         tab1.setLayout(layout)
 
         tab2 = QWidget()
+        guideLabel = QLabel("Check boxes for data to be updated:")
+        stockLineEdit = QLineEdit("")
+        stockCheck = QCheckBox("Ticker: ")
+
+        notesCheck = QCheckBox("Treasury Notes")
+        
+        tickerCheck = QCheckBox("Ticker List")
+
+        refreshButton = QPushButton("Update Data")
+        refreshButton.clicked.connect(self.clickRefresh)
+
+        errorMessage = QLabel("")
+
+        tab2Box = QVBoxLayout()
+        tab2miniBox = QHBoxLayout()
+
+        tab2miniBox.addWidget(stockCheck)
+        tab2miniBox.addWidget(stockLineEdit)
+
+        tab2Box.addWidget(guideLabel)
+        tab2Box.addLayout(tab2miniBox)
+        tab2Box.addWidget(notesCheck)
+        tab2Box.addWidget(tickerCheck)
+        tab2Box.addWidget(refreshButton)
+        tab2Box.addWidget(errorMessage)
+
+
+        tab2.setLayout(tab2Box)
+
+
+        tab3 = QWidget()
         inveStratTextEdit = QTextEdit()
         inveStratTextEdit.setPlainText("Investment strategies\n"
                                     "by ComradeAkko\n\n"
@@ -84,16 +121,18 @@ class App(QDialog):
                                     "Static Strategies\n\n"
                                     "Buy and Hold (BH):\n"
                                     "After an initial investment, the shares are held for the entirety of\n" 
-                                    "its period.\n\n"
+                                    "its period. Dividends are not reinvested.\n\n"
                                     "Regular Momentum Trading (MT):\n"
                                     "After an intial investment, the shares are held as long as the price\n" 
                                     "is above its 200-day moving average. If the price is below its 200-day\n"
-                                    "moving average, it is sold and transferred to bonds.\n\n"
+                                    "moving average, it is sold and transferred to bonds. Dividends are reinvested\n"
+                                    "when a trade is made.\n\n"
                                     "Golden-Cross Momentum Trading (GX):\n"
                                     "After an initial investment, shares are held when the price is above\n"
                                     "both its 200-day and 50-day moving average. If the 50-day moving average\n"
                                     "crosses below the 200-day moving average, the shares are sold and\n"
-                                    "transferred to bonds.\n\n\n"
+                                    "transferred to bonds. Dividends are reinvested\n"
+                                    "when a trade is made.\n\n\n"
                                     "Active Strategies\n\n"
                                     "Dollar-cost Averaging (DCA):\n"
                                     "After the initial lump-sum investment, every month on the 10th,\n"
@@ -123,10 +162,11 @@ class App(QDialog):
         tab3hbox = QHBoxLayout()
         tab3hbox.setContentsMargins(5, 5, 5, 5)
         tab3hbox.addWidget(inveStratTextEdit)
-        tab2.setLayout(tab3hbox)
+        tab3.setLayout(tab3hbox)
 
         self.tabWidget.addTab(tab1, "&Main")
-        self.tabWidget.addTab(tab2, "&Investment Strategies")
+        self.tabWidget.addTab(tab2, "&Updating Data")
+        self.tabWidget.addTab(tab3, "&Investment Strategies")
     
     # creates a ticker box
     def createTickerBoxes(self):
@@ -302,7 +342,7 @@ class App(QDialog):
     def createResultsBox(self):
         self.resultsBox = QHBoxLayout()
 
-        # create a self.resultsBox.itemAt(0).widget() for results
+        # create a table for results
         resultsTable = QTableWidget(7,3)
         resultsTable.horizontalHeader().setStretchLastSection(True)
 
@@ -352,8 +392,19 @@ class App(QDialog):
         self.extraDateBox.addWidget(basicStartDate)
         self.extraDateBox.addWidget(basicEndDate)
 
+    # create error boxes that display errors
+    def createErrorBox(self):
+        self.errorBox = QHBoxLayout()
+        errorLabel = QLabel(" ")
+        self.errorBox.addWidget(errorLabel)
+    
+    # creates an error box that displays final incomes
+    def createFinalIncomeBox(self):
+        self.finalIncomeBox = QHBoxLayout()
+        finalIncomeLabel = QLabel("Final Income: ")
+        self.finalIncomeBox.addWidget(finalIncomeLabel)
 
-
+    # what to do when calculate button is pushed
     @pyqtSlot()
     def clickCalculate(self):
         # get all the inputs
@@ -363,102 +414,144 @@ class App(QDialog):
         strat1 = self.stratBoxes.itemAt(1).widget().currentText()
         strat2 = self.stratBoxes.itemAt(4).widget().currentText()
         strat3 = self.stratBoxes.itemAt(7).widget().currentText()
-        capital = float(self.initialBox.itemAt(1).widget().text())
-        sma = int(self.staticNumbersBoxes.itemAt(1).widget().text())
-        commission = float(self.staticNumbersBoxes.itemAt(4).widget().text())
-        income = float(self.incomeBox.itemAt(1).widget().text())
-        aigr = float(self.aigrBox.itemAt(1).widget().text())
-        invesFrac = float(self.investFracBox.itemAt(1).widget().text())
 
-        # get the results
-        results = investCalc(ticker, startDate, endDate, capital, income, strat1, strat2, strat3, sma, commission, invesFrac, aigr)
+        # make sure the values are all numbers
+        numbers = True
+        try:
+            capital = float(self.initialBox.itemAt(1).widget().text())
+            sma = int(self.staticNumbersBoxes.itemAt(1).widget().text())
+            commission = float(self.staticNumbersBoxes.itemAt(4).widget().text())
+            income = float(self.incomeBox.itemAt(1).widget().text())
+            aigr = float(self.aigrBox.itemAt(1).widget().text())
+            invesFrac = float(self.investFracBox.itemAt(1).widget().text())
+        except ValueError:
+            numbers = False
+        
+        if numbers:
+            # get the results
+            results = investCalc(ticker, startDate, endDate, capital, income, strat1, strat2, strat3, sma, commission, invesFrac, aigr)
 
-        # sort out the data
-        data1 = results.strat1
-        data2 = results.strat2
-        data3 = results.strat3
+            if results.errorBoo == False:
+                # sort out the data
+                data1 = results.strat1
+                data2 = results.strat2
+                data3 = results.strat3
 
-        # print the results
-        # self.resultsBox.itemAt(0).widget()
+                # print the results
+                table = self.resultsBox.itemAt(0).widget()
 
-        # for strategy 1
-        strat1 = QTableWidgetItem(data1.type)
-        assets1 = QTableWidgetItem(str(round(data1.assets,2)))
-        cagr1 = QTableWidgetItem(str(round(data1.cagr,4)))
-        taxes1 = QTableWidgetItem(str(round(data1.taxes,2)))
-        commission1 = QTableWidgetItem(str(round(data1.comissions,2)))
-        pl1 = QTableWidgetItem(str(round(data1.pl,2)))
-        div1 = QTableWidgetItem(str(round(data1.div,2)))
-        treasury1 = QTableWidgetItem(str(round(data1.treasury,2)))
+                # for strategy 1
+                strat1 = QTableWidgetItem(data1.type)
+                assets1 = QTableWidgetItem(str(round(data1.assets,2)))
+                cagr1 = QTableWidgetItem(str(round(data1.cagr,4)))
+                taxes1 = QTableWidgetItem(str(round(data1.taxes,2)))
+                commission1 = QTableWidgetItem(str(round(data1.comissions,2)))
+                pl1 = QTableWidgetItem(str(round(data1.pl,2)))
+                div1 = QTableWidgetItem(str(round(data1.div,2)))
+                treasury1 = QTableWidgetItem(str(round(data1.treasury,2)))
 
-        self.resultsBox.itemAt(0).widget().setHorizontalHeaderItem(0, strat1)
-        self.resultsBox.itemAt(0).widget().setItem(0,0, commission1)
-        self.resultsBox.itemAt(0).widget().setItem(1,0, taxes1)
-        self.resultsBox.itemAt(0).widget().setItem(2,0, treasury1)
-        self.resultsBox.itemAt(0).widget().setItem(3,0, div1)
-        self.resultsBox.itemAt(0).widget().setItem(4,0, pl1)
-        self.resultsBox.itemAt(0).widget().setItem(5,0, assets1)
-        self.resultsBox.itemAt(0).widget().setItem(6,0, cagr1)
+                table.setHorizontalHeaderItem(0, strat1)
+                table.setItem(0,0, commission1)
+                table.setItem(1,0, taxes1)
+                table.setItem(2,0, treasury1)
+                table.setItem(3,0, div1)
+                table.setItem(4,0, pl1)
+                table.setItem(5,0, assets1)
+                table.setItem(6,0, cagr1)
 
-        # for strategy 2
-        strat2 = QTableWidgetItem(data2.type)
-        assets2 = QTableWidgetItem(str(round(data2.assets,2)))
-        cagr2 = QTableWidgetItem(str(round(data2.cagr,4)))
-        taxes2 = QTableWidgetItem(str(round(data2.taxes,2)))
-        commission2 = QTableWidgetItem(str(round(data2.comissions,2)))
-        pl2 = QTableWidgetItem(str(round(data2.pl,2)))
-        div2 = QTableWidgetItem(str(round(data2.div,2)))
-        treasury2 = QTableWidgetItem(str(round(data2.treasury,2)))
+                # for strategy 2
+                strat2 = QTableWidgetItem(data2.type)
+                assets2 = QTableWidgetItem(str(round(data2.assets,2)))
+                cagr2 = QTableWidgetItem(str(round(data2.cagr,4)))
+                taxes2 = QTableWidgetItem(str(round(data2.taxes,2)))
+                commission2 = QTableWidgetItem(str(round(data2.comissions,2)))
+                pl2 = QTableWidgetItem(str(round(data2.pl,2)))
+                div2 = QTableWidgetItem(str(round(data2.div,2)))
+                treasury2 = QTableWidgetItem(str(round(data2.treasury,2)))
 
-        self.resultsBox.itemAt(0).widget().setHorizontalHeaderItem(1, strat2)
-        self.resultsBox.itemAt(0).widget().setItem(0,1, commission2)
-        self.resultsBox.itemAt(0).widget().setItem(1,1, taxes2)
-        self.resultsBox.itemAt(0).widget().setItem(2,1, treasury2)
-        self.resultsBox.itemAt(0).widget().setItem(3,1, div2)
-        self.resultsBox.itemAt(0).widget().setItem(4,1, pl2)
-        self.resultsBox.itemAt(0).widget().setItem(5,1, assets2)
-        self.resultsBox.itemAt(0).widget().setItem(6,1, cagr2)
+                table.setHorizontalHeaderItem(1, strat2)
+                table.setItem(0,1, commission2)
+                table.setItem(1,1, taxes2)
+                table.setItem(2,1, treasury2)
+                table.setItem(3,1, div2)
+                table.setItem(4,1, pl2)
+                table.setItem(5,1, assets2)
+                table.setItem(6,1, cagr2)
 
-        # for strategy 3
-        strat3 = QTableWidgetItem(data3.type)
-        assets3 = QTableWidgetItem(str(round(data3.assets,2)))
-        cagr3 = QTableWidgetItem(str(round(data3.cagr,4)))
-        taxes3 = QTableWidgetItem(str(round(data3.taxes,2)))
-        commission3 = QTableWidgetItem(str(round(data3.comissions,2)))
-        pl3 = QTableWidgetItem(str(round(data3.pl,2)))
-        div3 = QTableWidgetItem(str(round(data3.div,2)))
-        treasury3 = QTableWidgetItem(str(round(data3.treasury,2)))
+                # for strategy 3
+                strat3 = QTableWidgetItem(data3.type)
+                assets3 = QTableWidgetItem(str(round(data3.assets,2)))
+                cagr3 = QTableWidgetItem(str(round(data3.cagr,4)))
+                taxes3 = QTableWidgetItem(str(round(data3.taxes,2)))
+                commission3 = QTableWidgetItem(str(round(data3.comissions,2)))
+                pl3 = QTableWidgetItem(str(round(data3.pl,2)))
+                div3 = QTableWidgetItem(str(round(data3.div,2)))
+                treasury3 = QTableWidgetItem(str(round(data3.treasury,2)))
 
-        self.resultsBox.itemAt(0).widget().setHorizontalHeaderItem(2, strat3)
-        self.resultsBox.itemAt(0).widget().setItem(0,2, commission3)
-        self.resultsBox.itemAt(0).widget().setItem(1,2, taxes3)
-        self.resultsBox.itemAt(0).widget().setItem(2,2, treasury3)
-        self.resultsBox.itemAt(0).widget().setItem(3,2, div3)
-        self.resultsBox.itemAt(0).widget().setItem(4,2, pl3)
-        self.resultsBox.itemAt(0).widget().setItem(5,2, assets3)
-        self.resultsBox.itemAt(0).widget().setItem(6,2, cagr3)
+                table.setHorizontalHeaderItem(2, strat3)
+                table.setItem(0,2, commission3)
+                table.setItem(1,2, taxes3)
+                table.setItem(2,2, treasury3)
+                table.setItem(3,2, div3)
+                table.setItem(4,2, pl3)
+                table.setItem(5,2, assets3)
+                table.setItem(6,2, cagr3)
 
-        # set the other basic info
-        tickerBasics = "Ticker: " + ticker
-        initialBasics = "Initial Capital: " + str(capital)
+                # set the other basic info
+                tickerBasics = "Ticker: " + results.ticker
+                initialBasics = "Initial Capital: " + str(round(capital,2))
 
-        startBasics = "Start Date: " + data1.iDate
-        endBasics = "End Date: " + data1.pDate
+                startBasics = "Start Date: " + data1.iDate
+                endBasics = "End Date: " + data1.pDate
 
-        self.extraBasicBox.itemAt(0).widget().setText(tickerBasics)
-        self.extraBasicBox.itemAt(1).widget().setText(initialBasics)
-        self.extraDateBox.itemAt(0).widget().setText(startBasics)
-        self.extraDateBox.itemAt(1).widget().setText(endBasics)
+                incomeBasics = "Final Income: " + str(round(results.income,2))
+
+                self.extraBasicBox.itemAt(0).widget().setText(tickerBasics)
+                self.extraBasicBox.itemAt(1).widget().setText(initialBasics)
+                self.extraDateBox.itemAt(0).widget().setText(startBasics)
+                self.extraDateBox.itemAt(1).widget().setText(endBasics)
+                self.finalIncomeBox.itemAt(0).widget().setText(incomeBasics)
+
+                error = " "
+                self.errorBox.itemAt(0).widget().setText(error)
+
+            else:
+                error = "Error: " + results.errorMess
+                self.errorBox.itemAt(0).widget().setText(error)
+
+        else:
+            error = "Error: One or more of the number inputs do not contain valid numbers, please try again."
+            self.errorBox.itemAt(0).widget().setText(error)
+    
+    # what to do when the refresh button is pushed
+    def clickRefresh(self):
+        ticker = self.tabWidget.widget(1).layout().itemAt(1).layout().itemAt(1).widget().text()
+        stockBool = self.tabWidget.widget(1).layout().itemAt(1).layout().itemAt(0).widget().isChecked()
+        notesBool = self.tabWidget.widget(1).layout().itemAt(2).widget().isChecked()
+        tickerBool = self.tabWidget.widget(1).layout().itemAt(3).widget().isChecked()
+
+        # if the stock check box is checked
+        if stockBool:
+            # if the ticker exists
+            if tickerExists(ticker):
+                getStockData(ticker)
+                if notesBool:
+                    getTreasuryData()
+                if tickerBool:
+                    getTickerList()
+                self.tabWidget.widget(1).layout().itemAt(5).widget().setText("Update done.")
+            else:
+                self.tabWidget.widget(1).layout().itemAt(5).widget().setText("Error: ticker does not exist")
+        else:
+            if notesBool:
+                getTreasuryData()
+            if tickerBool:
+                getTickerList()
+            self.tabWidget.widget(1).layout().itemAt(5).widget().setText("Update done.")
+            
         
 
-
-
-
-
-
-
-
-    
+  
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = App()
