@@ -1,0 +1,6 @@
+{
+    "app_name": "InveStrat0.1",
+    "author": "ComradeAkko",
+    "main_module": "src/main/python/main.py",
+    "version": "0.0.0"
+}

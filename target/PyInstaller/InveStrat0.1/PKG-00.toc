@@ -1,0 +1,49 @@
+('C:\\Users\\Jiro '
+ 'Mizuno\\projects\\investment-calculator\\target\\PyInstaller\\InveStrat0.1\\PKG-00.pkg',
+ {'BINARY': 1,
+  'DATA': 1,
+  'EXECUTABLE': 1,
+  'EXTENSION': 1,
+  'PYMODULE': 1,
+  'PYSOURCE': 1,
+  'PYZ': 0},
+ [('PYZ-00.pyz',
+   'C:\\Users\\Jiro '
+   'Mizuno\\projects\\investment-calculator\\target\\PyInstaller\\InveStrat0.1\\PYZ-00.pyz',
+   'PYZ'),
+  ('struct', 'C:\\Users\\Jiro Mizuno\\Python\\lib\\struct.pyo', 'PYMODULE'),
+  ('pyimod01_os_path',
+   'c:\\users\\jiro '
+   'mizuno\\projects\\investment-calculator\\venv\\lib\\site-packages\\PyInstaller\\loader\\pyimod01_os_path.pyc',
+   'PYMODULE'),
+  ('pyimod02_archive',
+   'c:\\users\\jiro '
+   'mizuno\\projects\\investment-calculator\\venv\\lib\\site-packages\\PyInstaller\\loader\\pyimod02_archive.pyc',
+   'PYMODULE'),
+  ('pyimod03_importers',
+   'c:\\users\\jiro '
+   'mizuno\\projects\\investment-calculator\\venv\\lib\\site-packages\\PyInstaller\\loader\\pyimod03_importers.pyc',
+   'PYMODULE'),
+  ('pyiboot01_bootstrap',
+   'c:\\users\\jiro '
+   'mizuno\\projects\\investment-calculator\\venv\\lib\\site-packages\\PyInstaller\\loader\\pyiboot01_bootstrap.py',
+   'PYSOURCE'),
+  ('fbs_pyinstaller_hook',
+   'C:\\Users\\JIROMI~1\\AppData\\Local\\Temp\\tmp9mz48dcp\\fbs_pyinstaller_hook.py',
+   'PYSOURCE'),
+  ('pyi_rth_pyqt5',
+   'c:\\users\\jiro '
+   'mizuno\\projects\\investment-calculator\\venv\\lib\\site-packages\\PyInstaller\\loader\\rthooks\\pyi_rth_pyqt5.py',
+   'PYSOURCE'),
+  ('main',
+   'C:\\Users\\Jiro '
+   'Mizuno\\projects\\investment-calculator\\src\\main\\python\\main.py',
+   'PYSOURCE'),
+  ('InveStrat0.1.exe.manifest',
+   'C:\\Users\\Jiro '
+   'Mizuno\\projects\\investment-calculator\\target\\PyInstaller\\InveStrat0.1\\InveStrat0.1.exe.manifest',
+   'BINARY')],
+ True,
+ False,
+ False,
+ [])
