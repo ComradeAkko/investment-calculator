@@ -6,6 +6,11 @@ This project was created to determine whether certain investment strategies were
 
 Pandas is already known to be a good data reader, but I want to try creating a data reader and analyzer from the ground up, so I won't be using it. See `investmentStrat.md` for more information regarding the investment strategies used in this program.
 
+## Usage
+The program can be used by downloading all files within the current branch and executing `python.exe inveStratGUI.py` on commandline.
+
+For those that want to simply run an execuatable, there is a file on the `installter` branch in the `target` folder. Because I'm not entirely sure how fbs works (the program that created the executable), I'll keep it optional.
+
 ## Requirements
 Python must be installed.
 Selenium 3.14.0 or newer must be installed.
