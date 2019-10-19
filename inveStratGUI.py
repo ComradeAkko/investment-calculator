@@ -17,8 +17,6 @@ class App(QDialog):
         super(App, self).__init__(parent)
 
         self.title = 'Stock/ETF Historical Investment Strategy Calculator'
-        
-        mainLayout = QGridLayout() 
 
         # create group boxes
         self.createTickerBoxes()

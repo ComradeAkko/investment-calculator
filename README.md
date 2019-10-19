@@ -1,6 +1,8 @@
 # investment-calculator
 ### by ComradeAkko
 
+![investment-calculator calculating performance of IEFA](appInAction.png)
+
 ## Objectives
 This project was created to determine whether certain investment strategies were more successful than others given a certain length of time, based on historical data.
 
